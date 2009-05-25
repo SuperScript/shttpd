@@ -1,0 +1,1158 @@
+# Assumptions:
+# Run as root.
+# User nobody.
+# ucspi-tcp, daemontools
+# available TCP ports on 127.0.0.1: 50016--50021
+#
+# Not tested:
+# Date: accuracy
+# timeouts
+# temporary errors
+
+here=`pwd`
+PATH=$here:/command:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+export PATH
+umask 022
+
+rm -rf rts-tmp
+service=$here/rts-tmp/service
+bindir=$here
+mkdir rts-tmp
+mkdir $service
+
+request() {
+  port=$1
+  shift
+  echo "$@" \
+    | mconnect 0 $port \
+    | sed -e 's/^Date: .*/Date: .../' \
+          -e 's/^Last-Modified: .*/Last-Modified: .../'
+}
+
+TCPREMOTEIP=1.2.3.4; export TCPREMOTEIP
+TCPLOCALPORT=0; export TCPLOCALPORT
+TIMEOUT=2; export TIMEOUT
+
+echo '--- cgi-header works'
+{ cat <<EOF
+header1: header one
+header2: header two
+transfer-encoding: none
+Last-Modified: Wed, 15 Sep 2004 12:33:20 EDT
+content-length: 6
+content-type: text/plain
+Date: Wed, 15 Sep 2004 10:33:20 EDT
+status:702 testing
+location: http://www.superscript.com/index.html
+set-cookie: cookie namnam
+
+body
+EOF
+} | cgi-header sed '$a\
+==EOF==
+'
+echo $?
+
+echo '--- cgi-header handles page not found'
+(
+SERVER_PROTOCOL=HTTP/1.0; export SERVER_PROTOCOL
+{ cat <<EOF
+header1: hereur1
+header2: hereur2
+
+EOF
+} | cgi-header nosuchexecutableprogram
+echo $?
+) | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-header uses SERVER_PROTOCOL environment variable'
+(
+SERVER_PROTOCOL=HTTP/1.1; export SERVER_PROTOCOL
+{ cat <<EOF
+status: 200 found
+header1: hereur1
+header2: hereur2
+
+EOF
+} | cgi-header cat -
+echo $?
+) | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-header objects to exit in header'
+(
+SERVER_PROTOCOL=HTTP/1.0; export SERVER_PROTOCOL
+{ cat <<EOF
+status: 200 found
+header1: hereur1
+header2: hereur2
+EOF
+} | cgi-header cat -
+echo $?
+) | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-header supplies redirect body'
+{ cat <<EOF
+header1: header one
+header2: header two
+transfer-encoding: none
+Last-Modified: Wed, 15 Sep 2004 12:33:20 EDT
+content-type: text/plain
+Date: Wed, 15 Sep 2004 10:33:20 EDT
+status:302 testing
+location: http://www.superscript.com/index.html
+set-cookie: cookie namnam
+
+EOF
+} | cgi-header cat -
+echo $?
+
+#echo '--- cgi-header handles internal redirect'
+#{ cat <<EOF
+#header1: header one
+#header2: header two
+#transfer-encoding: none
+#Last-Modified: Wed, 15 Sep 2004 12:33:20 EDT
+#content-type: text/plain
+#Date: Wed, 15 Sep 2004 10:33:20 EDT
+#status:302 testing
+#location: http://www.superscript.com/index.html
+#set-cookie: cookie namnam
+#
+#EOF
+#} | cgi-header cat -
+#echo $?
+
+echo '--- echo-config works'
+echo-config nobody nobody:nobody $service/echo-httpd 50016
+echo $?
+echo 1 > $service/echo-httpd/env/CONCURRENCY
+
+echo '--- redir-config works'
+redir-config nobody nobody $service/redir-httpd 50017
+echo $?
+echo 1 > $service/redir-httpd/env/CONCURRENCY
+
+echo '--- cgi-config works'
+cgi-config nobody nobody $service/cgi-httpd 50018 cgi-env
+echo $?
+echo 1 > $service/cgi-httpd/env/CONCURRENCY
+
+cgi-config nobody nobody $service/cgi-dispatch 50019 cgi-dispatch
+echo $?
+echo 1 > $service/cgi-dispatch/env/CONCURRENCY
+
+echo '--- cgiuser-config works'
+cgiuser-config nobody nobody $service/cgiuser-httpd 50020 cgi-env
+echo $?
+echo 1 > $service/cgiuser-httpd/env/CONCURRENCY
+
+echo '--- constant-config works'
+constant-config nobody nobody $service/constant-httpd 50021 hereur
+echo $?
+echo 1 > $service/constant-httpd/env/CONCURRENCY
+
+# Start the daemons
+echo '--- start echo-httpd'
+supervise $service/echo-httpd | supervise $service/echo-httpd/log &
+echo '--- start redir-httpd'
+supervise $service/redir-httpd | supervise $service/redir-httpd/log &
+echo '--- start cgi-httpd'
+supervise $service/cgi-httpd | supervise $service/cgi-httpd/log &
+echo '--- start cgi-dispatch'
+supervise $service/cgi-dispatch | supervise $service/cgi-dispatch/log &
+echo '--- start cgiuser-httpd'
+supervise $service/cgiuser-httpd | supervise $service/cgiuser-httpd/log &
+echo '--- start constant-httpd'
+supervise $service/constant-httpd | supervise $service/constant-httpd/log &
+
+echo '--- started daemons'
+
+sleep 5
+
+echo '--- echo-httpd works'
+request 50016 'nonsense request'
+
+rm -rf $service/redir-httpd/root/0
+mkdir $service/redir-httpd/root/0
+rm -rf $service/redir-httpd/root/1
+mkdir $service/redir-httpd/root/1
+
+echo '--- redir-data works'
+echo '/ftp/#ftp://ftp.example.com/
+/ftp#ftp://ftp.example.com/index.html
+/ftp/exact#ftp://ftp.example.com/exactly
+/foo#ftp://foo.example.com/index.html
+' > $service/redir-httpd/root/0/data
+
+(
+  cd $service/redir-httpd/root
+  ln -s 0 www.example.com
+  ln -s loop loop
+  cd 0
+  redir-data data.cdb data.tmp < data
+)
+
+echo '--- redir-httpd handles HTTP/0.9 GET'
+request 50017 'GET /ftp'
+
+echo '--- redir-httpd handles HTTP/0.9 HEAD'
+request 50017 'HEAD /ftp'
+
+echo '--- redir-httpd rejects HTTP/0.9 undefined method'
+request 50017 'NONSENSE /ftp'
+
+echo '--- redir-httpd handles HTTP/1.0 GET'
+request 50017 'GET /ftp HTTP/1.0
+Host: 0
+'
+
+echo '--- redir-httpd handles HTTP/1.0 HEAD'
+request 50017 'HEAD /ftp HTTP/1.0
+Host: 0
+'
+
+echo '--- redir-httpd rejects HTTP/1.0 undefined method'
+request 50017 'NONSENSE /ftp HTTP/1.0
+Host: 0
+'
+
+echo '--- redir-httpd handles HTTP/1.1 GET'
+request 50017 'GET /ftp HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd handles HTTP/1.1 HEAD'
+request 50017 'HEAD /ftp HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd rejects undefined method'
+request 50017 'NONSENSE /ftp HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd rejects POST'
+request 50017 'POST /ftp HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd rejects lowercase method'
+request 50017 'get /ftp HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd handles exact match'
+request 50017 'GET /ftp/exact HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd prefers exact match'
+request 50017 'GET /ftp HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd handles partial match'
+request 50017 'GET /ftp/partial HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd handles nonmatch'
+request 50017 'GET /nonmatch HTTP/1.1
+Host: 0
+'
+
+echo '--- redir-httpd rewrites empty path'
+(
+  cd $service/redir-httpd/root/0
+  echo '/.ftp/#ftp://dotftp.example.com/
+/.ftp/../#ftp://dotftp.example.com/dotdot/
+/#ftp://bar.example.com/
+' >> data
+  redir-data data.cdb data.tmp < data
+)
+request 50017 'GET
+'
+
+echo '--- redir-httpd rejects nonexistent host'
+request 50017 'GET /ftp HTTP/1.1
+Host: nosuch.example.com
+'
+
+echo '--- redir-httpd downcases request host name'
+request 50017 'GET /ftp HTTP/1.1
+Host: wWW.eXAMPLE.cOM
+'
+
+echo '--- redir-httpd ignores case in version string'
+request 50017 'GET /ftp Http/1.1
+Host: 0
+'
+
+echo '--- redir-httpd treats malformed version string as HTTP/1.1'
+request 50017 'GET /ftp http//1.0
+Host: 0
+'
+
+echo '--- redir-httpd handles %xx'
+request 50017 'GET /%66%6F%6f http/1.1
+Host: 0
+'
+
+echo '--- redir-httpd handles absolute URL'
+echo 'GET http://0/ftp http/1.1
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd handles absolute https URL'
+echo 'GET https://0/ftp http/1.1
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd handles query string'
+echo 'GET /ftp?querystring http/1.1
+Host: 0
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd ignores irrelevant headers'
+echo 'GET /ftp?querystring http/1.1
+Onehead: onehead
+Host: 0
+Twohead: twohead
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd handles multiple requests'
+echo 'GET http://0/ftp?querystringone http/1.1
+
+GET http://www.example.com/foo?querystringtwo http/1.1
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd issues error for missing data.cdb'
+echo 'GET /ftp http/1.1
+Host: 1
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd omits body from HEAD error message'
+echo 'HEAD /ftp http/1.1
+Host: 1
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd issues error for ELOOP'
+echo 'GET /ftp http/1.1
+Host: loop
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd issues error for group unreadable data.cdb'
+chmod 604 $service/redir-httpd/root/0/data.cdb
+echo 'GET /ftp http/1.1
+Host: 0
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd issues error for world unreadable data.cdb'
+chmod 640 $service/redir-httpd/root/0/data.cdb
+echo 'GET /ftp http/1.1
+Host: 0
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd issues error for o+x u-x'
+chmod 645 $service/redir-httpd/root/0/data.cdb
+echo 'GET /ftp http/1.1
+Host: 0
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+chmod 644 $service/redir-httpd/root/0/data.cdb
+
+echo '--- redir-httpd rewrites dots after slashes in host'
+mkdir $service/redir-httpd/root/:host
+(
+  cd $service/redir-httpd/root/:host
+  ln -s ../0/data .
+  redir-data data.cdb data.tmp < data
+)
+echo 'GET /.ftp/../ HTTP/1.1
+Host: .host
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd rejects Expect'
+echo 'GET /ftp HTTP/1.1
+Host: 0
+Expect: whatever
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+mkdir $service/redir-httpd/root/0/0
+cp $service/redir-httpd/root/0/data.cdb  $service/redir-httpd/root/0/0
+echo '--- redir-httpd compresses multiple slashes in host'
+echo 'GET //foo HTTP/1.0
+Host: ////////////////////0///////////////////0
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd truncates log entry'
+echo 'GET /foo HTTP/1.0
+Host: 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- redir-httpd translates unusual characters in log entry'
+echo 'GET 00%0001%0102%021f%1f20%2021%217f%7f80%8081%81ff%ff HTTP/1.0
+Host: 0
+' | {
+  envdir $service/redir-httpd/env redir-httpd
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles HTTP/0.9 GET'
+rm -rf $service/cgi-httpd/root/host/0
+mkdir $service/cgi-httpd/root/host/0
+rm -rf $service/cgi-httpd/root/host/www.example.com
+mkdir $service/cgi-httpd/root/host/www.example.com
+rm -rf $service/cgi-httpd/root/host/loop
+( cd $service/cgi-httpd/root/host/; ln -s loop loop )
+
+cp cgi-env $service/cgi-httpd/root/bin/cgi-env
+cp cgi-success $service/cgi-httpd/root/bin/cgi-success
+cp cgi-dispatch $service/cgi-dispatch/root/bin/cgi-dispatch
+
+echo 'GET /foobar' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles HTTP/0.9 HEAD'
+echo 'HEAD /foobar' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd rejects HTTP/0.9 POST'
+echo 'POST /foobar' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd rejects unknown HTTP/0.9 method'
+echo 'NONSENSE /foobar' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles HTTP/1.0 GET'
+echo 'GET /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles HTTP/1.0 HEAD'
+echo 'HEAD /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles HTTP/1.0 POST'
+echo 'POST /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd rejects unknown HTTP/1.0 method'
+echo 'NONSENSE /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd rejects lowercase HTTP/1.0 method'
+echo 'Get /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd issues error for nonexistent program'
+echo 'GET /hereur HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-nonesuch1
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd omits error body for HEAD request'
+echo 'HEAD /hereur HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-nonesuch2
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd issues error for nonexistent host'
+echo 'GET /hereur HTTP/1.1
+Host: nonesuch
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-nonesuch3
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd rewrites empty path'
+echo 'GET
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd downcases request host name'
+echo 'GET /foo HTTP/1.1
+Host: wWW.eXAMPLE.cOM
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd ignores case in version string'
+echo 'GET /foo Http/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd treats malformed version string as HTTP/1.1'
+echo 'GET /foo HTTP//1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-failure
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles %xx'
+echo 'GET /%66%6F%6f HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles absolute URL'
+echo 'GET http://0/foo HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+#echo '--- cgi-httpd closes multiple requests'
+#echo 'GET http://0/foo HTTP/1.1
+#Host: 0
+#
+#GET http://0/foo HTTP/1.1
+#Host: 0
+#' | {
+#  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+#  echo $?
+#} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles absolute https URL'
+echo 'GET https://0/foo HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles query string'
+echo 'GET /foo?querystring HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd ignores irrelevant headers'
+echo 'GET /foo?querystring HTTP/1.1
+Onehead: onehead
+Host: 0
+Twohead: twohead
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd uses cookies'
+echo 'GET /foo?querystring HTTP/1.1
+cookie: mycookie=header
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env HTTP_COOKIE
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd handles only the first request'
+echo 'GET /foo?queryone HTTP/1.1
+Host: 0
+
+GET /bar?querytwo HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd issues error for ELOOP'
+echo 'GET /foo HTTP/1.1
+Host: loop
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+rm -rf $service/cgi-httpd/root/host/0/:0
+mkdir $service/cgi-httpd/root/host/0/:0
+
+echo '--- cgi-httpd rewrites dots after slashes in host'
+echo 'GET /.foo HTTP/1.1
+Host: 0/.0
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-httpd rejects Expect'
+echo 'GET /foo HTTP/1.1
+Host: 0
+Expect: whatever
+' | {
+  envdir $service/cgi-httpd/env ./cgi-httpd cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles HTTP/0.9 GET'
+rm -rf $service/cgiuser-httpd/root/host/0
+mkdir $service/cgiuser-httpd/root/host/0
+rm -rf $service/cgiuser-httpd/root/host/www.example.com
+mkdir $service/cgiuser-httpd/root/host/www.example.com
+rm -rf $service/cgiuser-httpd/root/host/loop
+( cd $service/cgiuser-httpd/root/host/; ln -s loop loop )
+
+echo 'GET /foobar' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles HTTP/0.9 HEAD'
+echo 'HEAD /foobar' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd rejects HTTP/0.9 POST'
+echo 'POST /foobar' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd rejects unknown HTTP/0.9 method'
+echo 'NONSENSE /foobar' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles HTTP/1.0 GET'
+echo 'GET /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles HTTP/1.0 HEAD'
+echo 'HEAD /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles HTTP/1.0 POST'
+echo 'POST /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd rejects unknown HTTP/1.0 method'
+echo 'NONSENSE /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd rejects lowercase HTTP/1.0 method'
+echo 'Get /foobar HTTP/1.0
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd issues error for nonexistent program'
+echo 'GET /hereur HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-nonesuch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd omits error body for HEAD request'
+echo 'HEAD /hereur HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-nonesuch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd issues error for nonexistent host'
+echo 'GET /hereur HTTP/1.1
+Host: nonesuch
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-nonesuch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd rewrites empty path'
+echo 'GET
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd downcases request host name'
+echo 'GET /foo HTTP/1.1
+Host: wWW.eXAMPLE.cOM
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd ignores case in version string'
+echo 'GET /foo Http/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd treats malformed version string as HTTP/1.1'
+echo 'GET /foo HTTP//1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-failure
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles %xx'
+echo 'GET /%66%6F%6f HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles absolute URL'
+echo 'GET http://0/foo HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles absolute https URL'
+echo 'GET https://0/foo HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles query string'
+echo 'GET /foo?querystring HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd ignores irrelevant headers'
+echo 'GET /foo?querystring HTTP/1.1
+Onehead: onehead
+Host: 0
+Twohead: twohead
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd uses cookie header'
+echo 'GET /foo?querystring HTTP/1.1
+cookie: mycookie=header
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env HTTP_COOKIE
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd handles only the first request'
+echo 'GET /foo?queryone HTTP/1.1
+Host: 0
+
+GET /bar?querytwo HTTP/1.1
+Host: 0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd issues error for ELOOP'
+echo 'GET /foo HTTP/1.1
+Host: loop
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+rm -rf $service/cgiuser-httpd/root/host/0/:0
+mkdir $service/cgiuser-httpd/root/host/0/:0
+
+echo '--- cgiuser-httpd rewrites dots after slashes in host'
+echo 'GET /.foo HTTP/1.1
+Host: 0/.0
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-env
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgiuser-httpd rejects Expect'
+echo 'GET /foo HTTP/1.1
+Host: 0
+Expect: whatever
+' | {
+  envdir $service/cgiuser-httpd/env ./cgiuser-httpd $bindir/cgi-success
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+rm -rf $service/constant-httpd/root/0
+mkdir $service/constant-httpd/root/0
+echo 'HEREUR' > $service/constant-httpd/root/0/hereur
+chown nobody $service/constant-httpd/root/0/hereur
+
+echo '--- constant-httpd handles HTTP/0.9 GET'
+echo 'Hello, world' > $service/constant-httpd/root/0/foo
+echo 'GET foo' | envdir $service/constant-httpd/env ./constant-httpd hereur; echo $?
+
+echo '--- constant-httpd handles %xx'
+echo 'Hello, world' > $service/constant-httpd/root/0/foo
+echo 'GET %66%6F%6f' | envdir $service/constant-httpd/env ./constant-httpd hereur; echo $?
+
+echo '--- constant-httpd handles HTTP/1.0 GET'
+echo 'GET foo HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd handles HTTP/1.0 HEAD'
+echo 'HEAD foo HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd handles HTTP/1.1 GET with absolute URL'
+echo 'GET http://0/foo HTTP/1.1
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd handles HTTP/1.1 GET with absolute https URL'
+echo 'GET https://0/foo HTTP/1.1
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd handles HTTP/1.1 GET with Host'
+echo 'GET foo HTTP/1.1
+One: Two
+Host: 0
+Three: Four
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd rejects HTTP/1.1 GET without host'
+echo 'GET foo HTTP/1.1
+
+' | envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1 | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd handles HTTP/1.1 HEAD'
+echo 'HEAD http://0/foo HTTP/1.1
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd handles multiple HTTP/1.1 requests'
+echo 'Hi' > $service/constant-httpd/root/0/bar
+echo 'GET http://0/foo HTTP/1.1
+
+GET http://0/bar HTTP/1.1
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd prints error message for ENOENT'
+echo 'GET nonexistent HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd omits body from HEAD error message'
+echo 'HEAD nonexistent HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd prints error message for file not group-readable'
+echo wrong > $service/constant-httpd/root/0/unreadable
+chown nobody $service/constant-httpd/root/0/unreadable
+chmod 604 $service/constant-httpd/root/0/unreadable
+echo 'GET unreadable HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd unreadable 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd prints error message for file not world-readable'
+chmod 640 $service/constant-httpd/root/0/unreadable
+echo 'GET unreadable HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd unreadable 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd prints error message for 101 001'
+chmod 645 $service/constant-httpd/root/0/unreadable
+echo 'GET unreadable HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd unreadable 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd prints error message for directory'
+mkdir $service/constant-httpd/root/0/subdirectory
+echo 'GET subdirectory HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd subdirectory 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd lowercases host names'
+rm -rf $service/constant-httpd/root/0virtual
+mkdir $service/constant-httpd/root/0virtual
+cp $service/constant-httpd/root/0/hereur $service/constant-httpd/root/0virtual/hereur
+echo 'GET index.html HTTP/1.0
+Host: 0Virtual
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd rewrites dots after slashes'
+mkdir $service/constant-httpd/root/0virtual/:.
+mkdir $service/constant-httpd/root/0virtual/:./:
+cp $service/constant-httpd/root/0/hereur $service/constant-httpd/root/0virtual/:./:/hereur
+echo 'GET .././ HTTP/1.0
+Host: 0Virtual
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd .././hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd rejects unrecognized requests'
+echo 'POST .././ HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd rejects lowercase requests'
+echo 'Head / HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd rejects Expect'
+echo 'GET .././ HTTP/1.0
+Expect: whatever
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd hereur 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd converts names to file types'
+( for i in 'audio=vnd:digital-winds' dvi gif gz html jpeg mpeg pdf png ps
+  do
+    touch $service/constant-httpd/root/0/foo...$i
+    echo 'HEAD http://0/foo...'$i' HTTP/1.1
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd "foo...$i" 2>&1; echo $? )
+  done
+)  | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd compresses multiple slashes in log entry'
+echo 'GET foo HTTP/1.0
+Host: ////////////////////0///////////////////
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd /////////////////////////////////////////////////////////////////////////////////////////////////////////////foo 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd truncates log entry'
+echo 'GET foo HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd prints Last-Modified'
+echo test > $service/constant-httpd/root/0/old
+TZ=UTC touch -t 197001010325.45 $service/constant-httpd/root/0/old
+echo 'GET old HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd old 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd handles If-Modified-Since'
+echo 'GET old HTTP/1.0
+If-Modified-Since: second line takes precedence
+If-MoDiFiEd-SiNcE: Thu, 01 Jan 1970 03:25:45 GMTxxx
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd old 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- constant-httpd uses REQUESTHOST'
+rm -rf $service/constant-httpd/root/1
+mkdir $service/constant-httpd/root/1
+echo 'THEREUGO' >$service/constant-httpd/root/1/thereugo
+chown nobody $service/constant-httpd/root/1/thereugo
+echo '1' > $service/constant-httpd/env/REQUESTHOST
+echo 'GET / HTTP/1.0
+
+' | ( envdir $service/constant-httpd/env ./constant-httpd thereugo 2>&1; echo $? ) | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-dispatch works'
+rm -rf $service/cgi-dispatch/root/host/0
+mkdir $service/cgi-dispatch/root/host/0
+mkdir $service/cgi-dispatch/root/host/0/bin
+cp cgi-env $service/cgi-dispatch/root/host/0/bin/cgi-env
+
+rm -rf $service/cgi-dispatch/root/host/www.example.com
+mkdir $service/cgi-dispatch/root/host/www.example.com
+mkdir $service/cgi-dispatch/root/host/www.example.com/bin
+cp cgi-env $service/cgi-dispatch/root/host/www.example.com/bin/cgi-env
+cp cgi-env $service/cgi-dispatch/root/host/www.example.com/bin/:cgi-env
+
+echo 'GET /cgi-env' | {
+  envdir $service/cgi-dispatch/env ./cgi-httpd cgi-dispatch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-dispatch issues error'
+echo 'GET /foobar' | {
+  envdir $service/cgi-dispatch/env ./cgi-httpd cgi-dispatch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-dispatch issues error with headers'
+echo 'GET /foobar HTTP/1.0
+' | {
+  envdir $service/cgi-dispatch/env ./cgi-httpd cgi-dispatch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-dispatch respects HEAD in error'
+echo 'HEAD /foobar HTTP/1.0
+' | {
+  envdir $service/cgi-dispatch/env ./cgi-httpd cgi-dispatch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-dispatch uses Host:'
+echo 'GET /cgi-env HTTP/1.0
+Host: www.example.com
+' | {
+  envdir $service/cgi-dispatch/env ./cgi-httpd cgi-dispatch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- cgi-dispatch sanitizes path'
+echo 'GET ////.cgi-env HTTP/1.0
+Host: www.example.com
+' | {
+  envdir $service/cgi-dispatch/env ./cgi-httpd cgi-dispatch
+  echo $?
+} | sed 's/^Date: .*/Date: .../'
+
+echo '--- terminate daemons'
+
+svc -tdx $service/cgi-httpd
+svc -tdx $service/cgi-httpd/log
+
+svc -tdx $service/cgi-dispatch
+svc -tdx $service/cgi-dispatch/log
+
+svc -tdx $service/cgiuser-httpd
+svc -tdx $service/cgiuser-httpd/log
+
+svc -tdx $service/constant-httpd
+svc -tdx $service/constant-httpd/log
+
+svc -tdx $service/redir-httpd
+svc -tdx $service/redir-httpd/log
+
+svc -tdx $service/echo-httpd
+svc -tdx $service/echo-httpd/log
+
+wait
+wait
+wait
+wait
+wait
+wait
+
+echo '--- logs show the correct results'
+{
+  cat $service/cgi-httpd/log/main/current
+  cat $service/cgi-dispatch/log/main/current
+  cat $service/cgiuser-httpd/log/main/current
+  cat $service/constant-httpd/log/main/current
+  cat $service/redir-httpd/log/main/current
+  cat $service/echo-httpd/log/main/current
+} | sed -e 's/^@[^ ]* /@x /' -e 's/::.*/::x/' -e 's/ [0-9][0-9]* / x /'
+
+echo '--- remove temporary files'
+
+rm -rf ./rts-tmp
+
+exit 0

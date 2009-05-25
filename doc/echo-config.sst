@@ -1,0 +1,23 @@
+<html>
+<head>\title{shttpd}</head>
+<body>
+\crumbs
+\h1{The \tt{echo-config} program}
+
+\h2{Interface}
+<pre>
+  echo-config \it{user} \it{loguser} \it{dir} \it{port}
+</pre>
+where \ti{user} and \ti{loguser} are system account names,
+\ti{dir} is an absolute path name, and \ti{port} is a TCP port.
+The port may be specified as a name from \tt{/etc/services} or a
+numeric value.
+
+\tt{echo-config} creates the directory \ti{dir} as an
+\a{http://cr.yp.to/daemontools/svscan.html}{svscan}-format service
+directory, configured to run \tt{echo-httpd} on the TCP port
+\ti{port}, running \tt{echo-httpd} as \ti{user} and creating log
+files as \ti{loguser}.
+
+
+</body></html>

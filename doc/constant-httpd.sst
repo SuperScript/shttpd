@@ -1,0 +1,40 @@
+<html>
+<head>\title{shttpd}</head>
+<body>
+\crumbs
+\h1{The \tt{constant-httpd} program}
+
+\h2{Interface}
+<pre>
+  constant-httpd \it{file}
+</pre>
+where \ti{file} is a file name.
+
+\tt{constant-httpd} reads an HTTP request message from standard input,
+and prints \ti{file} in response.
+
+Before reading any input, \tt{constant-httpd} changes the working
+directory to that named in the \tt{$ROOT} environment variable,
+performs \tt{chroot} to the current directory, and then sets its
+group id and user id to the numeric values given in the environment
+variables \tt{$GID} and \tt{$UID}, typically set with
+\a{http://cr.yp.to/daemontools/envdir.html}{\tt{envdir}}.
+If it cannot carry out these operations, \tt{constant-httpd}
+complains to standard output and exits 111.  If the \ti{file}
+argument is missing it silently exits 100.
+
+If it encounters an error in reading \ti{file}, \tt{constant-httpd}
+exits 23.  If it encounters another error processing a request,
+\tt{constant-httpd} exits 21.  Otherwise, it exits 0.
+
+\tt{constant-httpd} accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1
+requests.  For a request with the host name \ti{host},
+\tt{constant-httpd} looks for \tt{./\it{host}/\it{file}}, after
+replacing \tt{/.} with \tt{/:} and \tt{//} with \tt{/} in
+\tt{./\it{host}/\it{file}}.  For a valid request lacking a host name,
+\tt{constant-httpd} uses \tt{0} as the host name.
+
+If the environment variable \tt{$REQUESTHOST} is set, then
+\tt{constant-httpd} uses its value as \ti{host}, overriding any host given in
+the request.
+</body></html>

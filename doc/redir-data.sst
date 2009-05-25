@@ -1,0 +1,28 @@
+<html>
+<head>\title{shttpd}</head>
+<body>
+\crumbs
+\h1{The \tt{redir-data} program}
+
+\h2{Interface}
+<pre>
+  redir-data
+</pre>
+
+\tt{redir-data} creates the cdb-format file \tt{data.cdb} from information in
+the file \tt{data} for use by \a{redir-httpd.html}{\tt{redir-httpd}}.  It
+may use other files with names beginning with \tt{data}.  The update to
+\tt{data.cdb} occurs atomically.
+
+\h2{Data format}
+
+Each redirection command in \tt{data} consists of a single line with two
+'\tt{#}'-separated fields.  The first field is a request path, and the second
+field is the replacement for that request path.  Additional '\tt{#}'
+characters may appear in the replacement field.
+
+A request path ending in '\tt{/}' permits \tt{redir-httpd} to form a partial
+match.  The corresponding replacement field must also end in '\tt{/}'.
+An exact matches is preferred, as is the longest partial match.
+
+</body></html>

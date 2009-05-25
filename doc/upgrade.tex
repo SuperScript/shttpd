@@ -1,0 +1,17 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{Upgrading from previous versions}
+
+\section{0.52 to 0.53}
+The \cmd{redir-httpd} now logs the \cmd{Referer:} header in requests.  Modify
+your log analysis programs accordingly.
+
+Redirection data for the host \carg{host} is now located in
+\cmd{ROOT/\arg{host}/data.cdb}.
+
+\end{document}

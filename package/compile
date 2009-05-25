@@ -1,0 +1,36 @@
+#!/bin/sh
+shout() { echo "package/compile: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "usage: package/compile [ --help ] [ target ... ]"
+  exit 100
+}
+####
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d src     ] || barf "no src directory"
+here=`env - PATH=$PATH pwd`
+PATH="$here/compile:/command:$PATH"
+export PATH
+#
+[ "$1" = "--help" ] && usage
+#
+safe mkdir -p compile command
+safe package/linksrc
+safe cd compile
+#
+if [ $# -gt 0 ]
+then
+  safe make "$@"
+else
+  safe make it
+  safe cd "$here"
+  for i in `cat package/commands`
+  do
+    safe rm -f "command/$i"'{new}'
+    safe cp -p "compile/$i" "command/$i"'{new}'
+    safe mv -f "command/$i"'{new}' "command/$i"
+  done
+fi
+exit 0

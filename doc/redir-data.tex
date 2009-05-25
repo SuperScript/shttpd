@@ -1,0 +1,31 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{redir-data} program}
+
+\section{Interface}
+\begin{code}
+  redir-data
+\end{code}
+
+\cmd{redir-data} creates the cdb-format file \cmd{data.cdb} from information in
+the file \cmd{data} for use by \href{\cmd{redir-httpd}}{redir-httpd.html}.  It
+may use other files with names beginning with \cmd{data}.  The update to
+\cmd{data.cdb} occurs atomically.
+
+\section{Data format}
+
+Each redirection command in \cmd{data} consists of a single line with two
+'\cmd{\#}'-separated fields.  The first field is a request path, and the second
+field is the replacement for that request path.  Additional '\cmd{\#}'
+characters may appear in the replacement field.
+
+A request path ending in '\cmd{/}' permits \cmd{redir-httpd} to form a partial
+match.  The corresponding replacement field must also end in '\cmd{/}'.
+An exact matches is preferred, as is the longest partial match.
+
+\end{document}

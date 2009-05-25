@@ -1,0 +1,6 @@
+warn-auto.sh
+safe.sh
+service_run.sh
+service_log.sh
+idu.sh
+cgiuser-config.sh

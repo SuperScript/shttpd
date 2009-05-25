@@ -1,0 +1,1846 @@
+--- cgi-header works
+HTTP/1.1 307 Temporary Redirect^M
+Status: 307 Temporary Redirect^M
+Server: cgi-header^M
+Location: http://www.superscript.com/index.html^M
+Date: Wed, 15 Sep 2004 14:33:20 GMT^M
+Content-Type: text/plain^M
+Content-Length: 6^M
+Transfer-Encoding: none^M
+Last-Modified: Wed, 15 Sep 2004 16:33:20 GMT^M
+set-cookie: cookie namnam^M
+header1: header one^M
+header2: header two^M
+^M
+body^M
+==EOF==^M
+0
+--- cgi-header handles page not found
+cgi-header: fatal: unable to run nosuchexecutableprogram: file does not exist
+HTTP/1.0 404 file does not exist^M
+Status: 404 file does not exist^M
+Server: cgi-header^M
+Date: ...
+Content-Type: text/html^M
+Content-Length: 47^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgi-header uses SERVER_PROTOCOL environment variable
+HTTP/1.1 200 found^M
+Status: 200 found^M
+Server: cgi-header^M
+Date: ...
+header1: hereur1^M
+header2: hereur2^M
+^M
+0
+--- cgi-header objects to exit in header
+Status: 500 internal server error^M
+Server: cgi-header^M
+Date: ...
+Content-Length: 49^M
+Content-Type: text/html^M
+^M
+<html><body>internal server error</body></html>^M
+0
+--- cgi-header supplies redirect body
+HTTP/1.1 307 Temporary Redirect^M
+Status: 307 Temporary Redirect^M
+Server: cgi-header^M
+Location: http://www.superscript.com/index.html^M
+Date: Wed, 15 Sep 2004 14:33:20 GMT^M
+Content-Type: text/plain^M
+Content-Length: 139^M
+Transfer-Encoding: none^M
+Last-Modified: Wed, 15 Sep 2004 16:33:20 GMT^M
+set-cookie: cookie namnam^M
+header1: header one^M
+header2: header two^M
+^M
+<html><body>Temporary Redirect to <a href="http://www.superscript.com/index.html">http://www.superscript.com/index.html</a></body></html>^M
+0
+--- echo-config works
+0
+--- redir-config works
+0
+--- cgi-config works
+0
+0
+--- cgiuser-config works
+0
+--- constant-config works
+0
+--- start echo-httpd
+--- start redir-httpd
+--- start cgi-httpd
+--- start cgi-dispatch
+--- start cgiuser-httpd
+--- start constant-httpd
+--- started daemons
+--- echo-httpd works
+HTTP/1.0 200 OK^M
+Server: echo-httpd^M
+Date: ...
+^M
+nonsense request^M
+--- redir-data works
+--- redir-httpd handles HTTP/0.9 GET
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+--- redir-httpd handles HTTP/0.9 HEAD
+--- redir-httpd rejects HTTP/0.9 undefined method
+<html><body>method not implemented</body></html>^M
+--- redir-httpd handles HTTP/1.0 GET
+HTTP/1.0 302 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+--- redir-httpd handles HTTP/1.0 HEAD
+HTTP/1.0 302 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+--- redir-httpd rejects HTTP/1.0 undefined method
+HTTP/1.0 501 method not implemented^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+--- redir-httpd handles HTTP/1.1 GET
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+--- redir-httpd handles HTTP/1.1 HEAD
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+--- redir-httpd rejects undefined method
+HTTP/1.1 501 method not implemented^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 50^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+--- redir-httpd rejects POST
+HTTP/1.1 501 method not implemented^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 50^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+--- redir-httpd rejects lowercase method
+HTTP/1.1 501 method not implemented^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 50^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+--- redir-httpd handles exact match
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/exactly^M
+Content-Length: 123^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/exactly">ftp://ftp.example.com/exactly</a></body></html>^M
+--- redir-httpd prefers exact match
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+--- redir-httpd handles partial match
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/partial^M
+Content-Length: 123^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/partial">ftp://ftp.example.com/partial</a></body></html>^M
+--- redir-httpd handles nonmatch
+HTTP/1.1 404 not found^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 37^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>not found</body></html>^M
+--- redir-httpd rewrites empty path
+<html><body>Temporary Redirect to <a href="ftp://bar.example.com/">ftp://bar.example.com/</a></body></html>^M
+--- redir-httpd rejects nonexistent host
+HTTP/1.1 404 file does not exist^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+--- redir-httpd downcases request host name
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+--- redir-httpd ignores case in version string
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+--- redir-httpd treats malformed version string as HTTP/1.1
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+--- redir-httpd handles %xx
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://foo.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://foo.example.com/index.html">ftp://foo.example.com/index.html</a></body></html>^M
+--- redir-httpd handles absolute URL
+1.2.3.4 read ./0/data.cdb: success
+1.2.3.4 0 0 exact /ftp ftp://ftp.example.com/index.html
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+0
+--- redir-httpd handles absolute https URL
+1.2.3.4 read ./0/data.cdb: success
+1.2.3.4 0 0 exact /ftp ftp://ftp.example.com/index.html
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html">ftp://ftp.example.com/index.html</a></body></html>^M
+0
+--- redir-httpd handles query string
+1.2.3.4 read ./0/data.cdb: success
+1.2.3.4 0 0 exact /ftp ftp://ftp.example.com/index.html
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html?querystring^M
+Content-Length: 153^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html?querystring">ftp://ftp.example.com/index.html?querystring</a></body></html>^M
+0
+--- redir-httpd ignores irrelevant headers
+1.2.3.4 read ./0/data.cdb: success
+1.2.3.4 0 0 exact /ftp ftp://ftp.example.com/index.html
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html?querystring^M
+Content-Length: 153^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html?querystring">ftp://ftp.example.com/index.html?querystring</a></body></html>^M
+0
+--- redir-httpd handles multiple requests
+1.2.3.4 read ./0/data.cdb: success
+1.2.3.4 0 0 exact /ftp ftp://ftp.example.com/index.html
+1.2.3.4 read ./www.example.com/data.cdb: success
+1.2.3.4 www.example.com 0 exact /foo ftp://foo.example.com/index.html
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://ftp.example.com/index.html?querystringone^M
+Content-Length: 159^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://ftp.example.com/index.html?querystringone">ftp://ftp.example.com/index.html?querystringone</a></body></html>^M
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://foo.example.com/index.html?querystringtwo^M
+Content-Length: 159^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://foo.example.com/index.html?querystringtwo">ftp://foo.example.com/index.html?querystringtwo</a></body></html>^M
+0
+--- redir-httpd issues error for missing data.cdb
+1.2.3.4 read ./1/data.cdb: open failed: file does not exist
+HTTP/1.1 404 file does not exist^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- redir-httpd omits body from HEAD error message
+1.2.3.4 read ./1/data.cdb: open failed: file does not exist
+HTTP/1.1 404 file does not exist^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+0
+--- redir-httpd issues error for ELOOP
+1.2.3.4 read ./loop/data.cdb: open failed: symbolic link loop
+HTTP/1.1 404 symbolic link loop^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 46^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>symbolic link loop</body></html>^M
+0
+--- redir-httpd issues error for group unreadable data.cdb
+1.2.3.4 read ./0/data.cdb: not ugo+r
+HTTP/1.1 404 access denied^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 41^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>access denied</body></html>^M
+0
+--- redir-httpd issues error for world unreadable data.cdb
+1.2.3.4 read ./0/data.cdb: open failed: access denied
+HTTP/1.1 404 access denied^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 41^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>access denied</body></html>^M
+0
+--- redir-httpd issues error for o+x u-x
+1.2.3.4 read ./0/data.cdb: o+x but u-x
+HTTP/1.1 404 access denied^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 41^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>access denied</body></html>^M
+0
+--- redir-httpd rewrites dots after slashes in host
+1.2.3.4 read ./:host/data.cdb: success
+1.2.3.4 .host 0 partial /.ftp/../ ftp://dotftp.example.com/dotdot/
+HTTP/1.1 307 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://dotftp.example.com/dotdot/^M
+Content-Length: 129^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://dotftp.example.com/dotdot/">ftp://dotftp.example.com/dotdot/</a></body></html>^M
+0
+--- redir-httpd rejects Expect
+HTTP/1.1 417 I do not accept Expect^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 50^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>I do not accept Expect</body></html>^M
+0
+--- redir-httpd compresses multiple slashes in host
+1.2.3.4 read ./0/0/data.cdb: success
+1.2.3.4 /0/0 0 partial / ftp://bar.example.com/
+HTTP/1.0 302 Temporary Redirect^M
+Server: redir-httpd^M
+Date: ...
+Location: ftp://bar.example.com//foo^M
+Content-Length: 117^M
+Content-Type: text/html^M
+^M
+<html><body>Temporary Redirect to <a href="ftp://bar.example.com//foo">ftp://bar.example.com//foo</a></body></html>^M
+0
+--- redir-httpd truncates log entry
+1.2.3.4 read ./01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567...: open failed: file does not exist
+HTTP/1.0 404 file does not exist^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 47^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- redir-httpd translates unusual characters in log entry
+1.2.3.4 read ./0/data.cdb: success
+1.2.3.4 0 0 unknown 00?01?02?1f?20_21!7f?80?81?ff?
+HTTP/1.0 404 not found^M
+Server: redir-httpd^M
+Date: ...
+Content-Length: 37^M
+Content-Type: text/html^M
+^M
+<html><body>not found</body></html>^M
+0
+--- cgi-httpd handles HTTP/0.9 GET
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/0.9^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foobar^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd handles HTTP/0.9 HEAD
+HTTP/1.1 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgi-httpd rejects HTTP/0.9 POST
+<html><body>method not implemented</body></html>^M
+0
+--- cgi-httpd rejects unknown HTTP/0.9 method
+<html><body>method not implemented</body></html>^M
+0
+--- cgi-httpd handles HTTP/1.0 GET
+HTTP/1.0 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgi-httpd handles HTTP/1.0 HEAD
+HTTP/1.0 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgi-httpd handles HTTP/1.0 POST
+HTTP/1.0 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgi-httpd rejects unknown HTTP/1.0 method
+HTTP/1.0 501 method not implemented^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+0
+--- cgi-httpd rejects lowercase HTTP/1.0 method
+HTTP/1.0 501 method not implemented^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+0
+--- cgi-httpd issues error for nonexistent program
+cgi-httpd: fatal: unable to run cgi-nonesuch1: file does not exist
+HTTP/1.1 404 file does not exist^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgi-httpd omits error body for HEAD request
+cgi-httpd: fatal: unable to run cgi-nonesuch2: file does not exist
+HTTP/1.1 404 file does not exist^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+0
+--- cgi-httpd issues error for nonexistent host
+HTTP/1.1 404 file does not exist^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgi-httpd rewrites empty path
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/0.9^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd downcases request host name
+HTTP/1.1 200 OK^M
+Server: cgi-success^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgi-httpd ignores case in version string
+HTTP/1.1 200 OK^M
+Server: cgi-success^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgi-httpd treats malformed version string as HTTP/1.1
+cgi-httpd: fatal: unable to run cgi-failure: file does not exist
+HTTP/1.1 404 file does not exist^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgi-httpd handles %xx
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd handles absolute URL
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd handles absolute https URL
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd handles query string
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=querystring^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd ignores irrelevant headers
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=querystring^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd uses cookies
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=querystring^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+HTTP_COOKIE=mycookie=header^M
+0
+--- cgi-httpd handles only the first request
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=queryone^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd issues error for ELOOP
+HTTP/1.1 404 symbolic link loop^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 46^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>symbolic link loop</body></html>^M
+0
+--- cgi-httpd rewrites dots after slashes in host
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0/.0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/.foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-httpd rejects Expect
+HTTP/1.1 417 I do not accept Expect^M
+Server: cgi-httpd^M
+Date: ...
+Content-Length: 50^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>I do not accept Expect</body></html>^M
+0
+--- cgiuser-httpd handles HTTP/0.9 GET
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/0.9^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foobar^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd handles HTTP/0.9 HEAD
+HTTP/1.1 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgiuser-httpd rejects HTTP/0.9 POST
+<html><body>method not implemented</body></html>^M
+0
+--- cgiuser-httpd rejects unknown HTTP/0.9 method
+<html><body>method not implemented</body></html>^M
+0
+--- cgiuser-httpd handles HTTP/1.0 GET
+HTTP/1.0 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgiuser-httpd handles HTTP/1.0 HEAD
+HTTP/1.0 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgiuser-httpd handles HTTP/1.0 POST
+HTTP/1.0 200 OK^M
+Server: cgi-success^M
+Date: ...
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgiuser-httpd rejects unknown HTTP/1.0 method
+HTTP/1.0 501 method not implemented^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+0
+--- cgiuser-httpd rejects lowercase HTTP/1.0 method
+HTTP/1.0 501 method not implemented^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+0
+--- cgiuser-httpd issues error for nonexistent program
+HTTP/1.1 404 file does not exist^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgiuser-httpd omits error body for HEAD request
+HTTP/1.1 404 file does not exist^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+0
+--- cgiuser-httpd issues error for nonexistent host
+HTTP/1.1 404 file does not exist^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgiuser-httpd rewrites empty path
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/0.9^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd downcases request host name
+HTTP/1.1 200 OK^M
+Server: cgi-success^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgiuser-httpd ignores case in version string
+HTTP/1.1 200 OK^M
+Server: cgi-success^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+success^M
+0
+--- cgiuser-httpd treats malformed version string as HTTP/1.1
+HTTP/1.1 404 file does not exist^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 47^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgiuser-httpd handles %xx
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd handles absolute URL
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd handles absolute https URL
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd handles query string
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=querystring^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd ignores irrelevant headers
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=querystring^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd uses cookie header
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=querystring^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+HTTP_COOKIE=mycookie=header^M
+0
+--- cgiuser-httpd handles only the first request
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=queryone^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd issues error for ELOOP
+HTTP/1.1 404 symbolic link loop^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 46^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>symbolic link loop</body></html>^M
+0
+--- cgiuser-httpd rewrites dots after slashes in host
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Connection: close^M
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgiuser-httpd^M
+SERVER_NAME=0/.0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.1^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/.foo^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgiuser-httpd rejects Expect
+HTTP/1.1 417 I do not accept Expect^M
+Server: cgiuser-httpd^M
+Date: ...
+Content-Length: 50^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>I do not accept Expect</body></html>^M
+0
+--- constant-httpd handles HTTP/0.9 GET
+1.2.3.4 read ./0/hereur: success
+HEREUR
+0
+--- constant-httpd handles %xx
+1.2.3.4 read ./0/hereur: success
+HEREUR
+0
+--- constant-httpd handles HTTP/1.0 GET
+1.2.3.4 read ./0/hereur: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 7^M
+^M
+HEREUR
+0
+--- constant-httpd handles HTTP/1.0 HEAD
+1.2.3.4 read ./0/hereur: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 7^M
+^M
+0
+--- constant-httpd handles HTTP/1.1 GET with absolute URL
+1.2.3.4 read ./0/hereur: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Transfer-Encoding: chunked^M
+^M
+7^M
+HEREUR
+^M
+0^M
+^M
+0
+--- constant-httpd handles HTTP/1.1 GET with absolute https URL
+1.2.3.4 read ./0/hereur: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Transfer-Encoding: chunked^M
+^M
+7^M
+HEREUR
+^M
+0^M
+^M
+0
+--- constant-httpd handles HTTP/1.1 GET with Host
+1.2.3.4 read ./0/hereur: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Transfer-Encoding: chunked^M
+^M
+7^M
+HEREUR
+^M
+0^M
+^M
+0
+--- constant-httpd rejects HTTP/1.1 GET without host
+HTTP/1.1 400 HTTP/1.1 requests must include a host name^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 70^M
+Connection: close^M
+Content-Type: text/html^M
+^M
+<html><body>HTTP/1.1 requests must include a host name</body></html>^M
+--- constant-httpd handles HTTP/1.1 HEAD
+1.2.3.4 read ./0/hereur: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Transfer-Encoding: chunked^M
+^M
+0
+--- constant-httpd handles multiple HTTP/1.1 requests
+1.2.3.4 read ./0/hereur: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Transfer-Encoding: chunked^M
+^M
+7^M
+HEREUR
+^M
+0^M
+^M
+1.2.3.4 read ./0/hereur: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Transfer-Encoding: chunked^M
+^M
+7^M
+HEREUR
+^M
+0^M
+^M
+0
+--- constant-httpd prints error message for ENOENT
+1.2.3.4 read ./0/hereur: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 7^M
+^M
+HEREUR
+0
+--- constant-httpd omits body from HEAD error message
+1.2.3.4 read ./0/hereur: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 7^M
+^M
+0
+--- constant-httpd prints error message for file not group-readable
+1.2.3.4 read ./0/unreadable: not ugo+r
+HTTP/1.0 404 access denied^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 41^M
+Content-Type: text/html^M
+^M
+<html><body>access denied</body></html>^M
+0
+--- constant-httpd prints error message for file not world-readable
+1.2.3.4 read ./0/unreadable: not ugo+r
+HTTP/1.0 404 access denied^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 41^M
+Content-Type: text/html^M
+^M
+<html><body>access denied</body></html>^M
+0
+--- constant-httpd prints error message for 101 001
+1.2.3.4 read ./0/unreadable: o+x but u-x
+HTTP/1.0 404 access denied^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 41^M
+Content-Type: text/html^M
+^M
+<html><body>access denied</body></html>^M
+0
+--- constant-httpd prints error message for directory
+1.2.3.4 read ./0/subdirectory: not a regular file
+HTTP/1.0 404 access denied^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 41^M
+Content-Type: text/html^M
+^M
+<html><body>access denied</body></html>^M
+0
+--- constant-httpd lowercases host names
+1.2.3.4 read ./0virtual/hereur: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 7^M
+^M
+HEREUR
+0
+--- constant-httpd rewrites dots after slashes
+1.2.3.4 read ./0virtual/:./:/hereur: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 7^M
+^M
+HEREUR
+0
+--- constant-httpd rejects unrecognized requests
+HTTP/1.0 501 method not implemented^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+0
+--- constant-httpd rejects lowercase requests
+HTTP/1.0 501 method not implemented^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>method not implemented</body></html>^M
+0
+--- constant-httpd rejects Expect
+HTTP/1.0 417 I do not accept Expect^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 50^M
+Content-Type: text/html^M
+^M
+<html><body>I do not accept Expect</body></html>^M
+0
+--- constant-httpd converts names to file types
+1.2.3.4 read ./0/foo...audio=vnd:digital-winds: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: audio/vnd.digital-winds^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...dvi: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: application/x-dvi^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...gif: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: image/gif^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...gz: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: application/x-gzip^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...html: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/html^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...jpeg: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: image/jpeg^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...mpeg: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: video/mpeg^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...pdf: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: application/pdf^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...png: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: image/png^M
+Transfer-Encoding: chunked^M
+^M
+0
+1.2.3.4 read ./0/foo...ps: success
+HTTP/1.1 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: application/postscript^M
+Transfer-Encoding: chunked^M
+^M
+0
+--- constant-httpd compresses multiple slashes in log entry
+1.2.3.4 read ./0/foo: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 13^M
+^M
+Hello, world
+0
+--- constant-httpd truncates log entry
+1.2.3.4 read ./0/012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345...: open failed: file does not exist
+HTTP/1.0 404 file does not exist^M
+Server: constant-httpd^M
+Date: ...
+Content-Length: 47^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- constant-httpd prints Last-Modified
+1.2.3.4 read ./0/old: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Last-Modified: Thu, 01 Jan 1970 03:25:45 GMT^M
+Content-Type: text/plain^M
+Content-Length: 5^M
+^M
+test
+0
+--- constant-httpd handles If-Modified-Since
+1.2.3.4 read ./0/old: success
+HTTP/1.0 304 OK^M
+Server: constant-httpd^M
+Date: ...
+Last-Modified: Thu, 01 Jan 1970 03:25:45 GMT^M
+Content-Type: text/plain^M
+Content-Length: 5^M
+^M
+0
+--- constant-httpd uses REQUESTHOST
+1.2.3.4 read ./1/thereugo: success
+HTTP/1.0 200 OK^M
+Server: constant-httpd^M
+Date: ...
+Content-Type: text/plain^M
+Content-Length: 9^M
+^M
+THEREUGO
+0
+--- cgi-dispatch works
+HTTP/1.1 200 OK^M
+Server: cgi-env^M
+Date: ...
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=0^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/0.9^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/cgi-env^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-dispatch issues error
+<html><body>file does not exist</body></html>^M
+0
+--- cgi-dispatch issues error with headers
+HTTP/1.0 404 file does not exist^M
+Server: cgi-dispatch^M
+Date: ...
+Content-Length: 47^M
+Content-Type: text/html^M
+^M
+<html><body>file does not exist</body></html>^M
+0
+--- cgi-dispatch respects HEAD in error
+HTTP/1.0 404 file does not exist^M
+Server: cgi-dispatch^M
+Date: ...
+Content-Length: 47^M
+Content-Type: text/html^M
+^M
+0
+--- cgi-dispatch uses Host:
+HTTP/1.0 200 OK^M
+Server: cgi-env^M
+Date: ...
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=www.example.com^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.0^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=/cgi-env^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- cgi-dispatch sanitizes path
+HTTP/1.0 200 OK^M
+Server: cgi-env^M
+Date: ...
+Content-type: text/plain^M
+^M
+CGI/1.1 environment^M
+^M
+SERVER_SOFTWARE=cgi-httpd^M
+SERVER_NAME=www.example.com^M
+GATEWAY_INTERFACE=CGI/1.1^M
+SERVER_PROTOCOL=HTTP/1.0^M
+SERVER_PORT=0^M
+REQUEST_METHOD=GET^M
+HTTP_ACCEPT=unset^M
+PATH_INFO=////.cgi-env^M
+PATH_TRANSLATED=unset^M
+SCRIPT_NAME=^M
+QUERY_STRING=^M
+REMOTE_HOST=unset^M
+REMOTE_ADDR=1.2.3.4^M
+REMOTE_USER=unset^M
+AUTH_TYPE=unset^M
+CONTENT_TYPE=unset^M
+CONTENT_LENGTH=unset^M
+0
+--- terminate daemons
+--- logs show the correct results
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp/exact ftp://ftp.example.com/exactly
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 partial /ftp/ ftp://ftp.example.com/
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 unknown /nonmatch
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 partial / ftp://bar.example.com/
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./nosuch.example.com/data.cdb: open failed: file does not exist
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./www.example.com/data.cdb: success
+@x 127.0.0.1 www.example.com x exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /ftp ftp://ftp.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50017 :127.0.0.1::x
+@x 127.0.0.1 read ./0/data.cdb: success
+@x 127.0.0.1 x 0 exact /foo ftp://foo.example.com/index.html
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+@x tcpserver: status: 1/1
+@x tcpserver: pid x from 127.0.0.1
+@x tcpserver: ok x 0:127.0.0.1:50016 :127.0.0.1::x
+@x tcpserver: end x status 0
+@x tcpserver: status: 0/1
+@x tcpserver: status: 0/1
+--- remove temporary files

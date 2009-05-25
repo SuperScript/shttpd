@@ -1,0 +1,37 @@
+<html>
+<head>\title{shttpd}</head>
+<body>
+\crumbs
+\h1{The \tt{constant-config} program}
+
+\h2{Interface}
+<pre>
+  constant-config \it{user} \it{loguser} \it{dir} \it{port} \ti{file}
+</pre>
+where \ti{user} and \ti{loguser} are system account names,
+\ti{dir} is an absolute path name, \ti{port} is a TCP port, and
+\ti{file} is a file name.  The port may be specified as a name from
+\tt{/etc/services} or a numeric value.
+
+\tt{constant-config} creates the directory \ti{dir} as an
+\a{http://cr.yp.to/daemontools/svscan.html}{svscan}-format service
+directory, configured to run \tt{constant-httpd} on the TCP port
+\ti{port}, running \tt{constant-httpd} as \ti{user} and creating log
+files as \ti{loguser}.
+
+\tt{constant-config} creates the directory \tt{\it{dir}/env}
+containing files that establish runtime environment variables for
+\tt{constant-httpd} via \a{http://cr.yp.to/daemontools/envdir.html}{envdir}.
+The variables include \tt{$UID}, \tt{$GID}, \tt{$ROOT}, and
+\tt{$REQUESTHOST}.
+
+\tt{constant-config} creates the directory \tt{\it{dir}/root} for
+\tt{constant-httpd} to use as its root directory.
+
+\tt{constant-config} creates an empty
+\tt{\it{dir}/env/REQUESTHOST}, causing \tt{constant-httpd} to
+respect the host named in each request.  To force
+\tt{constant-httpd} to use a particular host name, overriding the
+host obtained from a request, edit \tt{\it{dir}/env/REQUESTHOST}
+after running \tt{constant-config}.
+</body></html>

@@ -1,0 +1,33 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{echo-httpd} program}
+
+\section{Interface}
+\begin{code}
+  echo-httpd
+\end{code}
+
+\cmd{echo-httpd} reads an HTTP request message from standard input,
+adds a header, and prints the result to standard output.
+
+Before reading any input, \cmd{echo-httpd} changes the working
+directory to that named in the \cmd{\$ROOT} environment variable,
+performs \cmd{chroot} to the current directory, and then sets its
+group id and user id to the numeric values given in the environment
+variables \cmd{\$GID} and \cmd{\$UID}, typically set with
+\href{\cmd{envdir}}{http://cr.yp.to/daemontools/envdir.html}.
+If it cannot carry out these operations, \cmd{echo-httpd} complains to
+standard output and exits 111.  \cmd{echo-httpd} opens no files.
+
+If it encounters a temporary error in processing a request,
+\cmd{echo-httpd} exits 21.  Otherwise, it exits 0.
+
+\cmd{echo-httpd} is a debugging tool, and not a proper http daemon.
+It does not parse the request message, and handles any request, no
+matter how severely deformed.
+\end{document}

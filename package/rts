@@ -1,0 +1,39 @@
+#!/bin/sh
+shout() { echo "rts: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "\
+usage: package/rts [ [-]part ... ]
+available parts:
+`package/parts list < compile/it=d`"
+  exit 100
+}
+####
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d compile ] || barf "no compile directory"
+here="`env - PATH=$PATH pwd`"
+PATH="$here/compile:/command:$PATH"
+export PATH
+#
+[ "$1" = "--help" ] && usage
+#
+targets="`package/parts list ${1+"$@"} < compile/it=d`"
+#
+safe cd compile
+result=0
+for i in default $targets
+do
+  echo "running tests for $i"
+  rts="./$i.rts"
+  [ -f "$rts" ] || continue
+  out="./$i.out"
+  exp="./$i.exp"
+  $rts 2>&1 | cat -v - > $out
+  diff $out $exp || {
+    shout "tests failed: $rts"
+    result=111
+  }
+done
+exit $result

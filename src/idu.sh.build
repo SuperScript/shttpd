@@ -1,0 +1,4 @@
+build_ifchanged conf-idu print-idu.sh systype
+rm -f idu.sh
+sh print-idu.sh
+exit 0

@@ -1,0 +1,58 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{How to install shttpd}
+
+shttpd comes with NO WARRANTY.
+
+\section{System requirements}
+shttpd works only under UNIX.
+
+Optional testing requires user accounts \cmd{shttp} and \cmd{shttplog}.
+
+\section{Installation}
+Download the shttpd package.  The most recent shttpd package is
+\href{\version{shttpd}}{\package{shttpd}.tar.gz}.
+
+Unpack the shttpd package:
+\begin{code}
+  gunzip \package{shttpd}.tar
+  tar -xf \package{shttpd}.tar
+  cd \package{shttpd}
+\end{code}
+
+Compile the shttpd programs:
+\begin{code}
+  make
+\end{code}
+
+As root, run some tests.  The tests assume the existence of the
+accounts \cmd{shttp} and \cmd{shttplog}, for running and logging
+output from shttpd daemons, respectively.  Create these accounts now,
+or skip the tests.  Normally, the tests produce no output:
+\begin{code}
+  make test
+\end{code}
+If the tests fail, manually compare their output with the expected results:
+\begin{code}
+  ./rts \>rts.out
+  diff rts.out rts.exp
+\end{code}
+
+As root, install the shttpd programs under \cmd{/usr/local/shttpd}:
+\begin{code}
+  make setup check
+\end{code}
+
+Report successful installation:
+\begin{code}
+  ( echo 'First M. Last'; cat `cat SYSDEPS` ) \
+  | mail web-inst@superscript.com
+\end{code}
+replacing \cmd{First M. Last} with your name.
+
+\end{document}

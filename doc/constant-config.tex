@@ -1,0 +1,40 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{constant-config} program}
+
+\section{Interface}
+\begin{code}
+  constant-config \arg{user} \arg{loguser} \arg{dir} \arg{port} \carg{file}
+\end{code}
+where \carg{user} and \carg{loguser} are system account names,
+\carg{dir} is an absolute path name, \carg{port} is a TCP port, and
+\carg{file} is a file name.  The port may be specified as a name from
+\cmd{/etc/services} or a numeric value.
+
+\cmd{constant-config} creates the directory \carg{dir} as an
+\href{svscan}{http://cr.yp.to/daemontools/svscan.html}-format service
+directory, configured to run \cmd{constant-httpd} on the TCP port
+\carg{port}, running \cmd{constant-httpd} as \carg{user} and creating log
+files as \carg{loguser}.
+
+\cmd{constant-config} creates the directory \cmd{\arg{dir}/env}
+containing files that establish runtime environment variables for
+\cmd{constant-httpd} via \href{envdir}{http://cr.yp.to/daemontools/envdir.html}.
+The variables include \cmd{\$UID}, \cmd{\$GID}, \cmd{\$ROOT}, and
+\cmd{\$REQUESTHOST}.
+
+\cmd{constant-config} creates the directory \cmd{\arg{dir}/root} for
+\cmd{constant-httpd} to use as its root directory.
+
+\cmd{constant-config} creates an empty
+\cmd{\arg{dir}/env/REQUESTHOST}, causing \cmd{constant-httpd} to
+respect the host named in each request.  To force
+\cmd{constant-httpd} to use a particular host name, overriding the
+host obtained from a request, edit \cmd{\arg{dir}/env/REQUESTHOST}
+after running \cmd{constant-config}.
+\end{document}

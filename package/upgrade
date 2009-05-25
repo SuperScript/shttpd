@@ -1,0 +1,62 @@
+#!/bin/sh
+shout() { echo "upgrade: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "\
+usage: package/upgrade [ [-]part ... ]
+available parts:
+`package/parts list < compile/it=d`"
+  exit 100
+}
+####
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d compile ] || barf "no compile directory"
+here=`env - PATH=$PATH pwd`
+PATH="$here/compile:/command:$PATH"
+export PATH
+#
+[ "$1" = "--help" ] && usage
+#
+name="`head -1 package/name`"
+package="`basename $name`"
+current="`basename $here`"
+parent="`dirname $here`"
+commands="`package/parts target ${1+"$@"} -PRIVATE < package/commands`"
+echo "symlink $package -> $current"
+safe rm -f $package
+safe ln -s $current $package
+safe mv -f $package ..
+#
+if [ -r package/command-cp ]
+then
+  for d in `sed -e '/^$/q' < package/command-cp`
+  do
+    echo "copying commands into $d"
+    safe mkdir -p $d
+    for i in $commands
+    do
+      safe rm -f "$d/$i"'{new}'
+      safe cp -p "command/$i" "$d/$i"'{new}'
+      safe mv -f "$d/$i"'{new}' "$d/$i"
+    done
+  done
+fi
+#
+if [ -r package/command-ln ]
+then
+  for d in `sed -e '/^$/q' < package/command-ln`
+  do
+    echo "symlinking commands into $d"
+    safe mkdir -p $d
+    for i in $commands
+    do
+      safe rm -f "$d/$i"'{new}'
+      safe ln -s "$parent/$package/command/$i" "$d/$i"'{new}'
+      safe mv -f "$d/$i"'{new}' "$d/$i"
+    done
+  done
+fi
+#
+exit 0

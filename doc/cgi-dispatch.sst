@@ -1,0 +1,30 @@
+<html>
+<head>\title{shttpd}</head>
+<body>
+\crumbs
+\h1{The \tt{cgi-dispatch} program}
+
+\h2{Interface}
+<pre>
+  cgi-dispatch
+</pre>
+
+\tt{cgi-dispatch} executes the program \tt{./bin/\it{prog}}, where
+\ti{prog} is the value of the CGI environment variable \tt{PATH_INFO}.
+\tt{cgi-dispatch} is intended to be run under
+\a{cgi-httpd.html}{\tt{cgi-httpd}} or
+\a{cgiuser-httpd.html}{\tt{cgiuser-httpd}}.
+
+Before executing the program, \tt{cgi-dispatch} replaces \tt{//} with \tt{/}
+and \tt{/.} with \tt{/:} in the program path.
+
+If it encounters an error in processing a request, \tt{cgi-dispatch} exits 21.
+If it cannot find the requested program, \tt{cgi-dispatch} issues an error
+response and exits 0.  Otherwise, it returns the exit code of \ti{prog}.
+
+\h2{Running under \tt{cgi-shttpd}}
+Configure a server to run \tt{cgi-dispatch} under \tt{cgi-shttpd} in the
+directory \tt{ROOT}.  Copy \tt{cgi-dispatch} to \tt{ROOT/bin}.  Copy programs
+you want \tt{cgi-dispatch} to run for requests to \ti{host} into the
+directory \tt{ROOT/\it{host}/bin}.
+</body></html>

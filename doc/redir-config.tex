@@ -1,0 +1,36 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{redir-config} program}
+
+\section{Interface}
+\begin{code}
+  redir-config \arg{user} \arg{loguser} \arg{dir} \arg{port}
+\end{code}
+where \carg{user} and \carg{loguser} are system account names,
+\carg{dir} is an absolute path name, and \carg{port} is a TCP port.
+The port may be specified as a name from \cmd{/etc/services} or a
+numeric value.
+
+\cmd{redir-config} creates the directory \carg{dir} as an
+\href{svscan}{http://cr.yp.to/daemontools/svscan.html}-format service
+directory, configured to run \cmd{redir-httpd} on the TCP port
+\carg{port}, running \cmd{redir-httpd} as \carg{user} and creating log
+files as \carg{loguser}.
+
+\cmd{redir-config} creates the directory \cmd{\arg{dir}/env}
+containing files that establish runtime environment variables for
+\cmd{redir-httpd} via \href{envdir}{http://cr.yp.to/daemontools/envdir.html}.
+
+\cmd{redir-config} creates the directory \cmd{\arg{dir}/root} for
+\cmd{redir-httpd} to use as its root directory.
+
+\cmd{redir-config} creates \cmd{\arg{dir}/root/Makefile} for compiling
+\cmd{\arg{dir}/root/data.cdb} with \href{\cmd{redir-data}}{redir-data.html}.
+
+
+\end{document}

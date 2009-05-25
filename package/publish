@@ -1,0 +1,29 @@
+#!/bin/sh
+shout() { echo "package/publish: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "usage: package/publish [ --help ] [ file ... ]"
+  exit 100
+}
+####
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d src     ] || barf "no src directory"
+here=`env - PATH=$PATH pwd`
+PATH="$here/compile:/command:$PATH"
+export PATH
+#
+[ "$1" = "--help" ] && usage
+#
+safe cd compile
+#
+dest="`head -1 "$here/package/publish-dest"`"
+publish="`head -1 "$here/package/publish-cmd"`"
+if [ $# -gt 0 ]
+then
+  safe $publish "$@" "$dest"
+else
+  safe $publish `cat "$here/package/publish-files"` "$dest"
+fi
+exit 0

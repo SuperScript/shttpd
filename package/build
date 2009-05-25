@@ -1,0 +1,53 @@
+#!/bin/sh
+shout() { echo "package/build: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "usage: package/build [ --help -v N ] [ target ... ]"
+  exit 100
+}
+####
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d src     ] || barf "no src directory"
+here=`env - PATH=$PATH pwd`
+PATH="$here/compile:/command:$PATH"
+export PATH
+#
+[ "$1" = "--help" ] && usage
+verbose="1"
+if [ "$1" = "-v" ]
+then
+  shift
+  verbose="$1"
+  shift
+fi
+#
+safe mkdir -p compile command
+safe package/linksrc
+safe cd compile
+#
+if [ -r .build.sig ]
+then
+  :
+else
+  { { which md5 >/dev/null && echo md5 -q; } \
+    || { which md5sum >/dev/null && echo md5sum; } \
+    || echo cksum 
+  } > .build.sig
+fi
+#
+if [ $# -gt 0 ]
+then
+  safe "$here/package/build-targ" -v $verbose "$@"
+else
+  safe "$here/package/build-targ" -v $verbose it
+  safe cd "$here"
+  for i in `cat package/commands`
+  do
+    safe rm -f "command/$i"'{new}'
+    safe cp -p "compile/$i" "command/$i"'{new}'
+    safe mv -f "command/$i"'{new}' "command/$i"
+  done
+fi
+exit 0

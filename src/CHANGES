@@ -1,0 +1,43 @@
+20000630
+	Move docs online.
+	Remove example progs.
+	Clean up tests.
+
+20000705
+	version: 0.51
+
+20000717
+	Corrections to tests & docs (UO).
+	Added constant-httpd and constant-config (RN).
+	Revise rts.tests accordingly.
+	version: 0.52
+
+20000719
+	Correct benign path typo in tests.
+
+20000819
+	Added cgiuser-httpd.
+
+20010429
+	New log format for redir-httpd includes referer head.
+	Version 0.53.
+
+20040523
+	Convert to package.
+	Rewrite *-config.
+
+20040613
+	Replace droppriv, droproot with setpriv, setroot.
+	Add timeout setting.
+	Don't set path in cgiuser-httpd.
+
+20040626
+	Shell scripts for *-config.
+	Add cookie support (Russ Nelson).
+
+20050315
+	Add cgi-header.
+
+20050815
+	Internal redirection support for cgi-header.
+

@@ -1,0 +1,33 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{cgi-dispatch} program}
+
+\section{Interface}
+\begin{code}
+  cgi-dispatch
+\end{code}
+
+\cmd{cgi-dispatch} executes the program \cmd{./bin/\arg{prog}}, where
+\carg{prog} is the value of the CGI environment variable \cmd{PATH_INFO}.
+\cmd{cgi-dispatch} is intended to be run under
+\href{\cmd{cgi-httpd}}{cgi-httpd.html} or
+\href{\cmd{cgiuser-httpd}}{cgiuser-httpd.html}.
+
+Before executing the program, \cmd{cgi-dispatch} replaces \cmd{//} with \cmd{/}
+and \cmd{/.} with \cmd{/:} in the program path.
+
+If it encounters an error in processing a request, \cmd{cgi-dispatch} exits 21.
+If it cannot find the requested program, \cmd{cgi-dispatch} issues an error
+response and exits 0.  Otherwise, it returns the exit code of \carg{prog}.
+
+\section{Running under \cmd{cgi-shttpd}}
+Configure a server to run \cmd{cgi-dispatch} under \cmd{cgi-shttpd} in the
+directory \cmd{ROOT}.  Copy \cmd{cgi-dispatch} to \cmd{ROOT/bin}.  Copy programs
+you want \cmd{cgi-dispatch} to run for requests to \carg{host} into the
+directory \cmd{ROOT/\arg{host}/bin}.
+\end{document}

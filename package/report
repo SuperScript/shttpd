@@ -1,0 +1,15 @@
+#!/bin/sh
+shout() { echo "report: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+[ -d compile ] || barf "no compile directory"
+[ -d package ] || barf "no package directory"
+here=`env - PATH=$PATH pwd`
+( echo name: `head -1 package/name`
+  echo version: `tail -1 package/versions`
+  echo cwd: $here
+  echo ''
+  if [ -r compile/sysdeps ]
+  then
+    cat compile/sysdeps
+  fi
+) | mail web-inst@superscript.com

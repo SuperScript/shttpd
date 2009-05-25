@@ -1,0 +1,46 @@
+#!/bin/sh
+shout() { echo "package/linksrc: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+errgrep() { grep "$1" >&2 || return 0;  barf "error linking source files"; }
+errexit() { [ 0 != $1 ] && exit $1; return 0; }
+usage() {
+  shout "usage: package/linksrc [ --help ] [ target ... ]"
+  exit 100
+}
+####
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d src     ] || barf "no src directory"
+here=`env - PATH=$PATH pwd`
+#
+[ "$1" = "--help" ] && usage
+#
+safe mkdir -p compile
+safe cd compile
+[ -r home  ] || safe echo "$here" > home
+[ -h src  ] || safe ln -s ../src src
+( exec 2>&3
+  ( safe cd src; safe find ./ ) | while read f
+  do
+    if [ -d "src/$f" ]
+    then
+      safe mkdir -p "$f"
+    else
+      fsrc="`dirname "$f" | sed -e 's!\([^/][^/]*\)!..!g' -e 's!\.\.$!src!'`"
+      f="`echo "$f" | sed -e 's!^\./!!'`"
+      [ -h "$f" ] || safe ln -s "$fsrc/$f" "$f"
+    fi
+  done
+) 3>&1 | errgrep "fatal:"
+
+errexit $?
+
+#rcode=$?
+#if [ 0 != $rcode ]
+#then
+#  exit $rcode
+#fi
+
+exit 0
+

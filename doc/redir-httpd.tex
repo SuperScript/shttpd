@@ -1,0 +1,107 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{redir-httpd} program}
+
+\section{Interface}
+\begin{code}
+  redir-httpd
+\end{code}
+
+\cmd{redir-httpd} reads an HTTP request message from standard input,
+looks up the URI in a cdb-format database, and prints a redirection
+command or error message to standard output.
+
+Before reading any input, \cmd{redir-httpd} changes the working
+directory to that named in the \cmd{\$ROOT} environment variable,
+performs \cmd{chroot} to the current directory, and then sets its
+group id and user id to the numeric values given in the environment
+variables \cmd{\$GID} and \cmd{\$UID}, typically set with
+\href{\cmd{envdir}}{http://cr.yp.to/daemontools/envdir.html}.
+If it cannot carry out these operations, \cmd{redir-httpd} complains
+to standard error and exits 111.
+
+If it encounters an error in processing a request, \cmd{redir-httpd}
+exits 21.  Otherwise, it exits 0.
+
+The \cmd{redir-httpd} program accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1 requests.
+For a request with the host name \carg{host}, \cmd{redir-httpd} replaces
+\cmd{/.} with \cmd{/:} and \cmd{//} with \cmd{/} in \cmd{./\carg{host}}, and
+looks for redirection commands in the file \cmd{./\carg{host}/data.cdb}, created
+by \href{\cmd{redir-data}}{redir-data.html}.  For a valid request lacking a host
+name, \cmd{redir-httpd} uses \cmd{0} as the host name.
+
+\section{Request path parsing}
+
+\cmd{redir-httpd} replaces \cmd{/.} with \cmd{/:} and \cmd{//} with \cmd{/} in
+the request path before looking for a match.
+
+Starting immediately to the left of any query string in the request path,
+and moving from right to left,
+\cmd{redir-httpd}
+splits the request path at each \cmd{/} character to obtain
+\cmd{\carg{head}/\carg{tail}},
+and and attempts a cdb lookup using
+\cmd{\carg{head}/}
+as the key.
+Upon sucess,
+\cmd{redir-httpd}
+replaces
+\cmd{\carg{head}/}
+with the lookup result, appends
+\carg{tail},
+and redirects the client to the resultant URL.
+When
+\cmd{redir-httpd}
+receives a request with an empty path, it uses
+\cmd{/}
+instead.
+If the full request path (sans query string) ends with a
+character other than
+\cmd{/},
+then
+\cmd{redir-httpd}
+first attempts a lookup using the full request path as the key.
+
+\section{Logging}
+
+When it processes a request without error, \cmd{redir-httpd} prints to
+standard error a line with the form
+\begin{code}
+  \arg{host ref match key value}
+\end{code}
+The string \carg{host} is the request host name.
+The string \carg{ref} is the value of the first \cmd{Referer:} header,
+  or \cmd{0} if there is no such header.
+The string \carg{match} is \cmd{unknown} if no match is found,
+  \cmd{partial} for a partial path match,
+  or \cmd{exact} for an exact path match.
+The string \carg{key} is the portion of the request path that matched a
+  redirection command,
+  or the full request path when \carg{match} is \cmd{unknown}.
+The string \carg{value} is the replacement for \carg{key} in the relevant
+  redirection command,
+  or the empty string when \carg{match} is \cmd{unknown}.
+
+Within each component of the log line, \cmd{redir-httpd} replaces control
+characters with '\cmd{?}' and spaces with '\cmd{_}'.  If a component exceeds 100
+characters in length, \cmd{redir-httpd} truncates it to 100 characters and
+appends ellipses.
+
+\section{Redirection examples}
+Commands specifying the following substitutions
+\begin{code}
+  /shttpd  --> http://www.superscript.com/shttpd/intro.html
+  /shttpd/ --> http://www.superscript.com/shttpd/
+\end{code}
+result in the following redirections:
+\begin{code}
+  /shttpd --> http://www.superscript.com/shttpd/intro.html
+  /shttpd/cgi-httpd.html --> http://www.superscript.com/shttpd/cgi-httpd.html
+\end{code}
+
+\end{document}

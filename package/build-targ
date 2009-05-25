@@ -1,0 +1,352 @@
+#!/bin/sh
+# WARNING: This file was auto-generated. Do not edit!
+shout() { echo "build-targ: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+
+usage() {
+  shout "usage: build-targ [ target ... ]"
+  exit 100;
+}
+
+home="`dirname $0`"
+awk="`{ which gawk >/dev/null && echo gawk; } || { which nawk >/dev/null && echo nawk; } || echo awk`"
+
+build_ifcreated() {
+  for dep in ${1+"$@"}
+  do
+    safe "$home/build-uptodate" -v $verbose -b "$build_it_db" setstat N "$dep"
+  done
+  safe "$home/build-uptodate" -v $verbose -b "$build_it_db" deps "$build_it_target" ${1+"$@"}
+}
+
+build_ifchanged() {
+  for dep in ${1+"$@"}
+  do
+    safe "$home/build-targ" -v $verbose -b "$build_it_db" "$dep"
+  done
+  safe "$home/build-uptodate" -v $verbose -b "$build_it_db" deps "$build_it_target" ${1+"$@"}
+}
+
+build_notarget() {
+  rm -f "$build_it_tmp"
+}
+
+# Create intermediate directories as needed.
+build_borrow_file() {
+  # destdir target srcdir
+  build_borrow_target="$1/$2"
+  case "$1" in
+    */)
+      build_borrow_target="$1$2"
+      ;;
+    *)
+      build_borrow_target="$1/$2"
+      ;;
+  esac
+      
+  case "$3" in
+    */)
+      build_borrow_source="$3$2"
+      ;;
+    *)
+      build_borrow_source="$3/$2"
+      ;;
+  esac
+      
+  if [ -f "$build_borrow_source" ]
+  then
+    safe build_notarget "$2"
+
+    # Create directory as needed.
+    safe mkdir -p "`dirname "$build_borrow_target"`"
+    safe cp "$build_borrow_source" "$build_borrow_target.tmp"
+#    safe fsync "$build_borrow_target.tmp"
+    safe mv "$build_borrow_target.tmp" "$build_borrow_target"
+
+    case "$1" in
+      .|./)
+	;;
+      *)
+	# Link only if at top level.
+	case "$2" in
+	  */*)
+	    safe ln -s "$1/`echo "$2" | sed -e 's#/.*$##'`" ./
+	    ;;
+	  *)
+	    safe ln -s "$build_borrow_target" ./
+	    ;;
+	esac
+	;;
+    esac
+
+    safe "$home/build-uptodate" -v $verbose setstat S "$2"
+    return 0
+  fi
+  return 1
+}
+
+build_borrow() {
+  build_borrow_destdir="$1"
+  shift
+
+  # Try to borrow file directly.
+  for build_borrow_srcdir in ${1+"$@"}
+  do
+    # Returns true iff borrow succeeds.
+    build_borrow_file \
+      "$build_borrow_destdir" \
+      "$build_it_target" \
+      "$build_borrow_srcdir" \
+    && exit 0
+  done
+
+  # Try to borrow .build file.
+  # Reset to start of extension search.
+  build_it_suffix="$build_it_base"
+  build_it_cmds="$build_it_base$build_cmds_ext"
+  while true
+  do
+    for build_borrow_srcdir in ${1+"$@"}
+    do
+      # Found.  The build has failed.
+      [ -r "$build_it_cmds" ] && return
+
+      # Returns true iff borrow succeeds.
+      # In that case, restart build of the target.
+      build_borrow_file \
+	"$build_borrow_destdir" \
+	"$build_it_cmds" \
+	"$build_borrow_srcdir" \
+      && {
+	safe "$home/build-uptodate" -v $verbose setstat B "$2"
+	exec "$home/build-targ" -v $verbose -b "$build_it_db" "$build_it_target"
+      }
+
+      # End of the line; give up.
+      [ "default$build_cmds_ext" = "$build_it_cmds" ] && return
+
+      # Next basename, suffix, cmd file.
+      build_next_cmds
+    done
+    # Nothing to borrow.  The build has failed.
+    return
+  done
+}
+
+build_failed() {
+  [ -r conf-borrow ] || barf "build failed: $build_it_target: $*"
+  # Returns iff borrow fails.
+  build_borrow `awk '/^$/ { exit }; { print }' <conf-borrow`
+  barf "build failed: $build_it_target: $*"
+}
+
+# In keeping with other prefixed commands.
+build_safe() {
+  safe ${1+"$@"}
+}
+
+build_dependcc() {
+  $awk \
+  '
+    function trace(s) {
+      if (1 < verbose) {
+	print "build-targ: dependcc: " s | "cat - >&2"
+	close("cat - >&2")
+      }
+    }
+    function leave(e) {
+      rcode = e
+      exit e
+    }
+
+    BEGIN {
+      FS = "\""
+      rcode = 0
+    }
+
+    /^[ \t]*#[ \t]*include[ \t]+"[^"]+"/ {
+      if (header[$2])
+	next
+      trace("include: " $2)
+      if (system(home "/build-targ -b " build_it_db " -v " verbose " " $2))
+	leave(111)
+      if (system(home "/build-uptodate -b " build_it_db " -v " verbose " deps " build_it_target " " $2))
+	leave(111)
+      header[$2] = 1
+      ARGV[ARGC++] = $2
+    }
+
+    END {
+      exit rcode
+    }
+  ' build_it_db="$build_it_db" \
+    home="$home" \
+    verbose="$verbose" \
+    build_it_target="$build_it_target" ${1+"$@"}
+}
+
+build_next_suffix() {
+  $awk \
+  '
+    BEGIN {
+      sub(/^\.?[^.]*/,"",ARGV[1])
+      print ARGV[1]
+      exit 0
+    }
+  ' "$1" </dev/null
+}
+
+build_next_cmds() {
+  build_it_suffix="`build_next_suffix "$build_it_suffix"`"
+  build_it_cmds="default$build_it_suffix$build_cmds_ext"
+  build_it_prefix="`basename "$build_it_base" "$build_it_suffix"`"
+}
+
+build_do() {
+  ( . "$build_it_cmds" "$1" "$2" "$3" > "$3" )
+}
+
+build_it() {
+  build_it_db="$1"
+  build_it_target="$2"
+  build_it_base="`basename "$build_it_target"`"
+  build_it_prefix=""
+  build_it_suffix="$build_it_base"
+  build_it_cmds="$build_it_base$build_cmds_ext"
+
+  build_it_dir="`dirname "$build_it_target"`"
+  if [ "." = "$build_it_dir" ]
+  then
+    build_it_dir=""
+  else
+    [ -d "$build_it_dir" ] \
+      || build_failed "no source directory: $build_it_dir"
+    build_it_dir="$build_it_dir/"
+  fi
+  build_it_tmp="$build_it_target.tmp"
+
+  while true
+  do
+    # Found.
+    [ -r "$build_it_cmds" ] && break
+
+    # End of the line; give up.
+    [ "default$build_cmds_ext" = "$build_it_cmds" ] \
+      && build_failed "missing build file for target: $build_it_target"
+
+    build_ifcreated "$build_it_cmds"
+    # Next basename, suffix, cmd file.
+    build_next_cmds
+  done
+
+  build_ifchanged "$build_it_cmds"
+
+  build_do "$build_it_target" "$build_it_dir$build_it_prefix" "$build_it_tmp"
+  rcode="$?"
+  if [ $rcode -ne 0 ]
+  then
+    rm -f "$build_it_tmp"
+    barf "cannot build: $build_it_target"
+  fi
+
+  # build_notarget
+  if [ -r "$build_it_tmp" ]
+  then
+#    safe fsync "$build_it_tmp"
+    safe mv "$build_it_tmp" "$build_it_target"
+  fi
+
+  [ $verbose -gt 0 ] && echo "$build_it_target" >&2
+  return 0
+}
+
+# MAIN
+
+db_file=".build"
+build_cmds_ext=".build"
+verbose=1
+force=0
+expand=""
+
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    -b)
+      db_file="$2"
+      shift; shift
+      ;;
+    -f)
+      force=1
+      shift
+      ;;
+    -v)
+      case "$2" in
+	[0-9]*)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      verbose="`expr 0 + $2`"
+      shift; shift
+      ;;
+    -q)
+      verbose=0
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+[ "X$db_file" = "X" ] && usage
+
+[ $verbose -ge 2 ] && shout "args: $*"
+
+if [ $force -eq 1 ]
+then
+  targets="`"$home/build-uptodate" -v $verbose -b "$db_file" targets`"
+  [ $? -eq 0 ] || barf "cannot "$home/build-uptodate" -v $verbose -b $db_file targets"
+  [ "X" = "X$targets" ] || safe rm $targets
+  [ -r  "$db_file" ] && safe rm "$db_file"
+fi
+
+for target in "$@"
+do
+  case "$target" in
+    ./*)
+      target="`awk 'BEGIN { print substr(ARGV[1],3); ARGC = 1 }' "$target" </dev/null`"
+      ;;
+    /*)
+      # FIXME: OK for source?
+      barf "target has absolute path: $target"
+      ;;
+    *)
+      ;;
+  esac
+
+  status="`"$home/build-uptodate" -v $verbose -b "$db_file" check "$target"`"
+  case "$status" in
+    Y)
+      continue
+      ;;
+    S|C|U)
+      safe "$home/build-uptodate" -v $verbose -b "$db_file" setstat S "$target"
+      continue
+      ;;
+    T|N)
+      safe "$home/build-uptodate" -v $verbose -b "$db_file" setstat T "$target"
+      safe build_it "$db_file" "$target"
+      # Commit even if no target file due to build_notarget.
+      # That creates a constantly out-of-date target, like "it".
+      safe "$home/build-uptodate" -v $verbose -b "$db_file" commit "$target"
+      continue
+      ;;
+    *)
+      barf "cannot check status: $target"
+      ;;
+  esac
+done
+exit 0

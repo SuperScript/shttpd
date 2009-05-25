@@ -1,0 +1,26 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{echo-config} program}
+
+\section{Interface}
+\begin{code}
+  echo-config \arg{user} \arg{loguser} \arg{dir} \arg{port}
+\end{code}
+where \carg{user} and \carg{loguser} are system account names,
+\carg{dir} is an absolute path name, and \carg{port} is a TCP port.
+The port may be specified as a name from \cmd{/etc/services} or a
+numeric value.
+
+\cmd{echo-config} creates the directory \carg{dir} as an
+\href{svscan}{http://cr.yp.to/daemontools/svscan.html}-format service
+directory, configured to run \cmd{echo-httpd} on the TCP port
+\carg{port}, running \cmd{echo-httpd} as \carg{user} and creating log
+files as \carg{loguser}.
+
+
+\end{document}

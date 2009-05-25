@@ -1,0 +1,778 @@
+#!/bin/sh
+# WARNING: This file was auto-generated. Do not edit!
+shout() { echo "build-uptodate: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+
+# Consider uptodate status of a target or source file.
+# Three actions are supported:
+#   check     check whether the file is up to date
+#   setstat   add or set info for a file in the stat section
+#   deps      add a list of dependencies to the deps section
+#   commit    mark the file as up to date
+#   targets   list the targets
+#   makefile  generate a makefile for all targets
+
+# Assume external locking as required for clear and commit.
+
+# The format of the .build file is:
+#   =STAT
+#   stat lines
+#   =DEPS
+#   deps lines
+# 
+# A stat line has one of the forms:
+#   sourcename N
+#   targetname B
+#   sourcename S sig
+#   targetname T sig
+# 
+# The first is a negative dependency; the file is out of date if it exists.  The
+# second is a target being built but not yet committed.  It is out of date.  The
+# third is a source file.  It is out of date if its signature has changed.  The
+# fourth is a target.  It is out of date if its signature has changed or if any
+# of its dependencies is out of date.  We refer to these lines by "type", the
+# second column.  In the T case the sig may be empty, which means that the
+# target is always out of date.  This applies to a target like "it".
+# 
+# A deps line has one of the forms:
+#   targetname depname
+#   targetname depname sig
+# 
+# The first is a negative dependency, and corresponds to an stat line of type N.
+# The second is a positive dependency, and corresponds to a stat line of type B,
+# S, or T.  If a target is up to date, then none of its dependencies have type B.
+
+usage() {
+  shout "usage: build-uptodate [ -l -L -b file ] sig|check|setstat|deps|commit|makefile [ arg ...]" >&2
+  exit 100;
+}
+
+awk="`{ which gawk >/dev/null && echo gawk; } || { which nawk >/dev/null && echo nawk; } || echo awk`"
+
+[ -r .build.sig ] || barf "no sig program"
+sigprog="`head -1 ./.build.sig`"
+
+# usage: check file
+# exits 0
+# prints:
+#   E	error
+#   Y	yes, up to date
+#   S	source changed
+#   C	file was created
+#   U	file unregistered
+#   T	target out of date
+#   N	no such file
+#
+
+check() {
+  $awk \
+  '
+    function trace(n,s) {
+      if (n < verbose) {
+	print "build-uptodate: check: " s | "cat - >&2"
+	close("cat - >&2")
+      }
+    }
+    function leave(s,from) {
+      if (target)
+	trace(1,target ": " s ": " from)
+      else
+	trace(1,s ": " from)
+      print s
+      reported = 1
+      exit 0
+    }
+
+    function file_exists(f) {
+      return (0 == system("test -r " f))
+    }
+
+    function sig_match(s,f) {
+      if (!file_exists(f))
+	return 0
+
+      filesig = ""
+      cmd = sigprog " " f
+      cmd | getline filesig
+      close(cmd)
+      sp = index(filesig," ")
+      if (sp) { filesig = substr(filesig,1,sp); }
+      trace(1,f ": " s[f] " " filesig)
+      return (s[f] == filesig)
+    }
+
+    BEGIN {
+      reported = 0
+      section = "b"
+      # So that we print a usage error.
+      verbose = 2
+      if (4 != ARGC)
+	leave("E","usage error")
+      # ARGV[1] is verbose=setting
+      # ARGV[2] is sigprog=setting
+      target = ARGV[3]
+      dep    = ARGV[3]
+      # leave parameters for awk
+      ARGC = 3
+      deps[target] = 1
+    }
+
+    /^=STAT$/ {
+      section = "s"
+      next
+    }
+
+    /^=DEPS$/ {
+      section = "d"
+      next
+    }
+
+    # Save sig for up-to-date testing.
+    "s" == section {
+      stat[$1] = $2
+      sig[$1] = $3
+
+      if ($1 == dep) {
+	# Found source.  Check sig and done.
+	if ("S" == $2) {
+	  trace(2,"checking source " $1)
+
+	  if (sig_match(sig,$1))
+	    leave("Y","sig match " $1)
+	  else
+	    leave("S","sig mismatch " $1)
+	}
+
+	# Found dep.
+	# Check existence always.
+	# Existing target always uptodate wrt self
+	# Check sig iff dep != target.
+	if ("T" == $2) {
+	  if (!file_exists($1))
+	    leave("T","target removed " $1)
+
+	  if ($1 == target) {
+	    trace(2,"self always uptodate " $1)
+	    next
+	  }
+
+	  if ($1 != target) {
+	    trace(2,"checking dependency " $1)
+	    sig[$1] = $3
+	    if (!sig_match(sig,$1))
+	      leave("T","dep stat sig mismatch " $1)
+	    next
+	  }
+
+	  next
+	}
+
+	# Unbuilt dep is always out of date.
+	if ("B" == $2)
+	  leave("T","building " $1)
+
+	# Target is out of date if file exists.
+	if ("N" == $2) {
+	  if (file_exists($1))
+	    leave("C","created " $1)
+	  else
+	    leave("Y","nonexistent " $1)
+	}
+      }
+
+      next
+    }
+
+    # Check dep dependencies.
+    "d" == section {
+      # Outside the subtree.
+      if (!deps[$1])
+	next
+
+      # Dep already seen.
+      if (uptodate[$2])
+	next
+
+      # Target: out of date or extend the tree.
+      # Always $2 != target.
+      # Mark $2 uptodate.
+      # Add $2 to deps tree.
+      if ("T" == stat[$2]) {
+	if (!tsig[$2]) {
+	  trace(2,"checking target dep " $1 " -> " $2)
+	  if (!sig_match(sig,$2))
+	    leave("T","dep sig mismatch")
+	  tsig[$2] = sig[$2]
+	}
+	if (tsig[$2] != $3)
+	  leave("T","dep tsig mismatch")
+
+	deps[$2] = 1
+	uptodate[$2] = 1
+	next
+      }
+
+      # Must not exist.
+      if ("N" == stat[$2]) {
+	if (file_exists($2))
+	  leave("C","negative dep created")
+	uptodate[$2] = 1
+	next
+      }
+
+      # Source: check signature.
+      if ("S" == stat[$2]) {
+	if (!sig_match(sig,$2))
+	  leave("T","source sig mismatch")
+	if (sig[$2] != $3)
+	  leave("T","source dep sig mismatch")
+	uptodate[$2] = 1
+	next
+      }
+
+      # Should never happen.
+      leave("E","should never happen")
+    }
+
+    END {
+      if (reported)
+	exit 0
+
+      # Known: up to date.
+      if (stat[target])
+	leave("Y","up to date")
+
+      if (file_exists(target))
+	leave("U","unregistered")
+      else
+	leave("N","no such file")
+    }
+  ' ${1+"$@"}
+}
+
+# usage: setstat N|S|T|B file
+setstat() {
+  $awk \
+  '
+    function trace(n,s) {
+      if (1 < verbose) {
+	print "build-uptodate: setstat: " s | "cat - >&2"
+	close("cat - >&2")
+      }
+    }
+
+    function leave(e,msg) {
+      trace(1,msg)
+      rcode = e
+      exit e
+    }
+
+    function stat_section(f,t) {
+      print "=STAT"
+      if ("N" == t) {
+	trace(1,f " N")
+	print f " N"
+      }
+      else if ("S" == t) {
+	filesig = ""
+	cmd = sigprog " " f
+	cmd | getline filesig
+	close(cmd)
+	if ("" == filesig)
+	  leave(99,"cannot obtain file sig")
+	sp = index(filesig," ")
+	if (sp) { filesig = substr(filesig,1,sp); }
+	trace(1,f " S " filesig)
+	print f " S " filesig
+      }
+      else {
+	trace(1,f " B")
+	print f " B"
+      }
+    }
+
+    function deps_section() {
+      print "=DEPS"
+    }
+
+    BEGIN {
+      rcode = -1
+      section = "b"
+      # So that we print a usage error.
+      verbose = 2
+      # ARGV[1] is verbose=setting
+      # ARGV[2] is sigprog=setting
+      type = ARGV[3]
+      target = ARGV[4]
+      ARGC = 3
+      if (type !~ /[NSTB]/)
+	leave(100,"unrecognized type: " type)
+    }
+
+    /^=STAT$/ {
+      section = "s"
+      stat_section(target,type)
+      next
+    }
+
+    /^=DEPS$/ {
+      if ("b" == section)
+	stat_section(target,type)
+      section = "d"
+      deps_section()
+      next
+    }
+
+    "s" == section {
+      # Eliminate old stat listings.
+      if ($1 == target)
+	next
+      print $0
+    }
+
+    "d" == section {
+      # Eliminate old target listings.
+      if ($1 == target)
+	next
+      print $0
+    }
+
+    END {
+      if (0 <= rcode)
+	exit rcode
+
+      if ("b" == section) {
+	stat_section(target,type)
+	section = "s"
+      }
+      if ("s" == section)
+	deps_section()
+
+      exit 0
+    }
+  ' ${1+"$@"}
+}
+
+# usage: deps target [ dep ... ]
+deps() {
+  $awk \
+  '
+    function trace(n,s) {
+      if (n < verbose) {
+	print "build-uptodate: deps: " s | "cat - >&2"
+	close("cat - >&2")
+      }
+    }
+    function leave(e,msg) {
+      trace(1,msg)
+      rcode = e
+      exit e
+    }
+    function stat_section() {
+      print "=STAT"
+    }
+    function deps_section() {
+      print "=DEPS"
+    }
+    function insert_deps() {
+      if (done)
+	return
+      for (i = 1;i < depcount;++i) {
+	if (sig[arg[i]]) {
+	  trace(1,target " " arg[i] " " sig[arg[i]])
+	  print target " " arg[i] " " sig[arg[i]]
+	}
+	else {
+	  trace(1,target " " arg[i])
+	  print target " " arg[i]
+	}
+      }
+      done = 1
+    }
+    BEGIN {
+      rcode = -1
+      section = "b"
+      # So that we print a usage error.
+      verbose = 2
+      if (3 >= ARGC)
+	leave(100,"missing target")
+      # ARGV[1] is verbose=setting
+      # ARGV[2] is sigprog=setting
+      target = ARGV[3]
+      depcount = ARGC - 3
+      for (i = 1;i < depcount;++i) {
+	arg[i] = ARGV[i + 3]
+	dep[arg[i]] = 1
+      }
+      # leave parameters for awk
+      ARGC = 3
+      done = 0
+    }
+
+    /^=STAT$/ {
+      section = "s"
+      stat_section()
+      next
+    }
+
+    /^=DEPS$/ {
+      if ("b" == section)
+	stat_section()
+      section = "d"
+      deps_section()
+      next
+    }
+
+    # Save signatures for use in deps section.
+    "s" == section {
+      if (dep[$1] && "N" != $2)
+	sig[$1] = $3
+      print $0
+      next
+    }
+
+    # Insert deps before first appearance of dependency.
+    "d" == section {
+      if (dep[$1])
+	insert_deps()
+
+      print $0
+      next
+    }
+
+    END {
+      insert_deps()
+
+      if (0 <= rcode)
+	exit rcode
+
+      if ("b" == section) {
+	stat_section()
+	section = "s"
+      }
+      if ("s" == section)
+	deps_section()
+
+      exit 0
+    }
+  ' ${1+"$@"}
+}
+
+# usage: commmit target
+commit() {
+  $awk \
+  '
+    function trace(n,s) {
+      if (n < verbose) {
+	print "build-uptodate: commit: " s | "cat - >&2"
+	close("cat - >&2")
+      }
+    }
+    function leave(e,msg) {
+      trace(1,msg)
+      rcode = e
+      exit e
+    }
+    function file_exists(f) {
+      return (0 == system("test -r " f))
+    }
+    function stat_section() {
+      print "=STAT"
+    }
+    function deps_section() {
+      print "=DEPS"
+    }
+
+    BEGIN {
+      rcode = -1
+      committed = 0
+      nocommit = 1
+      seen = 0
+      section = "b"
+      # So that we print a usage error.
+      verbose = 2
+      if (4 != ARGC)
+	leave(100,"missing target")
+      # ARGV[1] is verbose=setting
+      # ARGV[2] is sigprog=setting
+      target = ARGV[3]
+      # leave verbose=setting for awk
+      ARGC = 3
+    }
+
+    /^=STAT$/ {
+      section = "s"
+      stat_section()
+      next
+    }
+
+    /^=DEPS$/ {
+      if ("b" == section)
+	stat_section()
+      section = "d"
+      deps_section()
+      next
+    }
+
+    "s" == section {
+      # Pass other entries through unchanged.
+      if ($1 != target) {
+	print $0
+	next
+      }
+
+      # Not building.  Nothing to do.
+      seen = 1
+      if ("B" != $2) {
+	trace(1,"nothing to do: " $0)
+	print $0
+	next
+      }
+
+      # Append signature.
+      # Commit of non-existent file is for build_notarget entries.
+      filesig = ""
+      if (file_exists(target)) {
+	cmd = sigprog " " target
+	cmd | getline filesig
+	close(cmd)
+	if ("" == filesig)
+	  leave(99,"cannot obtain file sig")
+	sp = index(filesig," ")
+	if (sp) { filesig = substr(filesig,1,sp); }
+      }
+      trace(1,target " T " filesig)
+      print target " T " filesig
+      next
+    }
+
+    # Pass through unchanged.
+    "d" == section {
+      print $0
+    }
+
+    END {
+      if (0 <= rcode)
+	exit rcode
+
+      if (seen)
+	exit committed
+
+      exit nocommit
+    }
+  ' ${1+"$@"}
+}
+
+# usage: targets
+targets() {
+  $awk \
+  '
+    function leave(e,msg) {
+      if (e) trace(1,msg)
+      rcode = e
+      exit e
+    }
+    BEGIN {
+      rcode = -1
+      section = "b"
+      # leave verbose=setting for awk
+      ARGC = 2
+    }
+
+    /^=STAT$/ {
+      section = "s"
+      next
+    }
+
+    /^=DEPS$/ {
+      leave(0,"")
+    }
+
+    # Print actual and prospective targets.
+    "s" == section {
+      if ($2 ~ /[TB]/) {
+	print $1
+	next
+      }
+    }
+
+    END {
+      if (0 <= rcode)
+	exit rcode
+      exit 0
+    }
+  ' ${1+"$@"}
+}
+
+# usage: makefile
+makefile() {
+  $awk \
+  '
+    # Heapsort, "The AWK Programming Language" p162.
+    function swap(A,i,j,  t) {
+      t = A[i]; A[i] = A[j]; A[j] = t
+    }
+    function heapify(A,left,right,  p,c) {
+      for (p = left;(c = 2 * p) <= right;p = c) {
+	if (c < right && A[c + 1] > A[c]) { c++ }
+	if (A[p] < A[c]) { swap(A,c,p) }
+      }
+    }
+    function hsort(A,n,  i) {
+      for (i = int(n/2);i >= 1;i--) {
+	heapify(A,i,n)
+      }
+      for (i = n;i > 1;i--) {
+	swap(A,1,i)
+	heapify(A,1,i-1)
+      }
+    }
+
+    BEGIN {
+      rcode = -1
+      section = "b"
+      target_count = 0
+      # leave verbose=setting for awk
+      ARGC = 2
+    }
+
+    /^=STAT$/ {
+      section = "s"
+      next
+    }
+
+    /^=DEPS$/ {
+      section = "d"
+      next
+    }
+
+    # Save completed targets.
+    "s" == section {
+      if ($2 ~ /T/) {
+	target[++target_count] = $1
+	next
+      }
+    }
+
+    # Save positive dependencies.
+    "d" == section {
+      if ("" != $3) {
+	dep[$1,++dep_count[$1]] = $2
+	if ($2 ~ /\.build$/)
+	  build[$1] = $2
+	next
+      }
+    }
+
+    END {
+      if (0 <= rcode)
+	exit rcode
+
+      printf("%s:","default")
+      printf(" \\\n%s\n\n","it")
+
+      # Order targets to prevent 
+      hsort(target,target_count)
+
+      for (i = target_count;0 < i;--i) {
+	tname = target[i]
+	limit = dep_count[tname]
+	printf("%s:",tname)
+	printf(" \\\n%s","makefile.build")
+	for (j = limit;0 < j;--j) {
+	  printf(" \\\n%s",dep[tname,j])
+	}
+	bname = build[tname]
+	tmp = tname ".tmp"
+	ext = bname
+	sub(/^default/,"",ext)
+	sub(/\.build$/,"",ext)
+	base = substr(tname,1,length(tname) - length(ext))
+	printf("\n\tsh makefile.build %s %s %s\n\n",bname,tname,base)
+      }
+      exit 0
+    }
+  ' ${1+"$@"}
+}
+
+# MAIN
+
+lock=1
+verbose=1
+file=".build"
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    -l)
+      lock=0
+      shift
+      ;;
+    -L)
+      lock=1
+      shift
+      ;;
+    -b)
+      file="$2"
+      shift; shift
+      ;;
+    -v)
+      case "$2" in
+	[0-9]*)
+	  ;;
+	*)
+	  usage
+	  ;;
+      esac
+      verbose="`expr 0 + $2`"
+      shift; shift
+      ;;
+    -q)
+      verbose=0
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+[ "X$file" = "X" ] && usage
+[ $# -ge 1 ] || usage
+
+action="$1"
+shift
+
+case "$action" in
+  sig|check|targets|makefile)
+    [ $verbose -ge 2 ] && shout "args: $action $*"
+    [ -f "$file" ] || file="/dev/null"
+    $action verbose="$verbose" sigprog="$sigprog" ${1+"$@"} < "$file"
+    ;;
+
+  setstat|deps|commit)
+    lockfile="$file.lock"
+    tmpfile="$file.tmp"
+    if [ -f "$file" ]
+    then
+      input="$file"
+    else
+      input="/dev/null"
+    fi
+    [ 1 -eq $lock ] \
+      &&  exec setlock "$lockfile" "$0" -l -b "$file" -v $verbose "$action" ${1+"$@"}
+
+    [ $verbose -ge 2 ] && shout "args: $action $*"
+    ( safe "$action" verbose="$verbose" sigprog="$sigprog" ${1+"$@"} < "$input" > "$tmpfile"
+#      safe fsync "$tmpfile"
+      safe mv "$tmpfile" "$file"
+    ) || {
+      rm -f "$tmpfile"
+      exit 111
+    }
+    ;;
+  *)
+    usage
+    ;;
+esac
+

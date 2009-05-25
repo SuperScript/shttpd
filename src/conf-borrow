@@ -1,0 +1,9 @@
+src
+/home/web/src/focusdb/src
+
+The first line indicates the destination directory for copied files.
+This is typically ./ or src.
+Subsequent lines list directories to search for files not found in the local
+directory.  The first empty line terminates the list.
+
+

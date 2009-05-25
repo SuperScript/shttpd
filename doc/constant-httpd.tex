@@ -1,0 +1,43 @@
+%& sstdoc
+\banner{shttpd}
+\begin{document}
+\image{../sstlogo.gif}{sstlogo}
+\parent{../superscript}{\SST}
+\parent{../software}{Software}
+\parent{intro}{shttpd}
+\chapter{The \cmd{constant-httpd} program}
+
+\section{Interface}
+\begin{code}
+  constant-httpd \arg{file}
+\end{code}
+where \carg{file} is a file name.
+
+\cmd{constant-httpd} reads an HTTP request message from standard input,
+and prints \carg{file} in response.
+
+Before reading any input, \cmd{constant-httpd} changes the working
+directory to that named in the \cmd{\$ROOT} environment variable,
+performs \cmd{chroot} to the current directory, and then sets its
+group id and user id to the numeric values given in the environment
+variables \cmd{\$GID} and \cmd{\$UID}, typically set with
+\href{\cmd{envdir}}{http://cr.yp.to/daemontools/envdir.html}.
+If it cannot carry out these operations, \cmd{constant-httpd}
+complains to standard output and exits 111.  If the \carg{file}
+argument is missing it silently exits 100.
+
+If it encounters an error in reading \carg{file}, \cmd{constant-httpd}
+exits 23.  If it encounters another error processing a request,
+\cmd{constant-httpd} exits 21.  Otherwise, it exits 0.
+
+\cmd{constant-httpd} accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1
+requests.  For a request with the host name \carg{host},
+\cmd{constant-httpd} looks for \cmd{./\arg{host}/\arg{file}}, after
+replacing \cmd{/.} with \cmd{/:} and \cmd{//} with \cmd{/} in
+\cmd{./\arg{host}/\arg{file}}.  For a valid request lacking a host name,
+\cmd{constant-httpd} uses \cmd{0} as the host name.
+
+If the environment variable \cmd{\$REQUESTHOST} is set, then
+\cmd{constant-httpd} uses its value as \carg{host}, overriding any host given in
+the request.
+\end{document}

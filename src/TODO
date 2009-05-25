@@ -1,0 +1,7 @@
+Support nontrivial PATH_INFO in cgi-dispatch.
+Flexible logging.
+Better error logging.
+Improved docs.
+config scripts use generic paths for programs (COMMAND not HOME?)
+cgi-headers: header behavior a la apache, tests
+	     handle redirect via Location a la apache mod_cgi
