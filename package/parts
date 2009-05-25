@@ -13,17 +13,28 @@ case "$request" in
     ;;
 esac
 exec awk '
+function flushlist(l, k) { for (k in l) delete l[i] }
 BEGIN {
   all = 1
-  want[""] = 1
 
-  if (ARGC > 1) {
-    for (i = 1;i < ARGC;++i) {
+  # skip request arg
+  if (ARGC > 2) {
+    for (i = 2;i < ARGC;++i) {
       targ = ARGV[i]
       if (targ == "-") {
 	all = 0
+	flushlist(want)
+      }
+      else if (targ == "+") {
+	all = 1
+	flushlist(want)
+      }
+      else if (targ ~ /^[+]/) {
+	all = 0
+	want[substr(targ,2)] = 1
       }
       else if (targ ~ /^-/) {
+	all = 1
 	want[substr(targ,2)] = -1
       }
       else {
@@ -31,13 +42,15 @@ BEGIN {
 	want[targ] = 1
       }
     }
-    ARGC = 1
+    # Preserve request arg
+    ARGC = 2
   }
 }
 {
   if (!$1) next
 
   if (want[$2] < 0) next
+
   if (request == "target") {
     if (want[$2] == 1 || all) print $1
   }
