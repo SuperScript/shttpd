@@ -1,6 +1,18 @@
 #!/bin/sh
 shout() { echo "parts: $@" >&2; }
 barf() { shout "fatal: $@"; exit 111; }
+#
+# Print the input programs that match parts named as command-line arguments.
+# Input lines have the form: progname part
+# where part is optional.  The empty part is the default part.
+# First argument is:
+#   target    Print program names.
+#   list      Print part names.
+# Other arguments are:
+#   -	      Deselect all parts.  Only print those named
+#   -part     Deselect named part.  Print default and other parts except this one.
+#   part      Select named part.  Print default and this part.
+#
 usage() { shout "usage: package/parts target|list [ [-]part ... ]"; exit 100; }
 [ $# -lt 1 ] && usage
 request="$1"
@@ -16,6 +28,7 @@ exec awk '
 function flushlist(l, k) { for (k in l) delete l[i] }
 BEGIN {
   all = 1
+  want[""] = 1
 
   # skip request arg
   if (ARGC > 2) {
