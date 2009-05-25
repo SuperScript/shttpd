@@ -1491,6 +1491,9 @@ load
 
 cgi-config: \
 makefile.build \
+shout.sh \
+barf.sh \
+safe.sh \
 cgi-config.sh \
 idu.sh \
 service_log.sh \
