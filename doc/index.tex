@@ -1,10 +1,8 @@
-%& sstdoc
-\banner{shttpd}
+\documentclass{book}
+\usepackage{sstdef}
+\title{shttpd}
 \begin{document}
-\image{../sstlogo.gif}{sstlogo}
-\parent{../superscript}{\SST}
-\parent{../software}{Software}
-\chapter{shttpd}
+\section{shttpd}
 
 \begin{chapterintro}
 \href{How to install shttpd}{install.html}\\
@@ -31,7 +29,7 @@
 \href{A mailing list for shttpd discussion}{../lists.html\#shttpd}\\
 \end{chapterintro}
 
-\section{What is shttpd?}
+\subsection{What is shttpd?}
 \cmd{echo-httpd}, \cmd{redir-httpd}, and \cmd{cgi-httpd} are HTTP
 daemons designed to complement publicfile.
 
@@ -59,6 +57,6 @@ Each instance of an shttpd daemon listens on a separate address, in a
 \cmd{chroot} directory (except for \cmd{cgiuser-httpd}), typically running as a
 nonprivileged user.
 
-\section{Related Software}
+\subsection{Related Software}
 The shttpd package complements \href{publicfile}{http://cr.yp.to/publicfile.html}.
 \end{document}

@@ -1,0 +1,4 @@
+build_ifchanged ../package/versions ../package/name ../package/path
+awk '$1{version=$1};END{print "\\newcommand{\\version}{" version "}"}' < ../package/versions
+awk '$1{path=$1};END{print "\\newcommand{\\path}{" path "}"}' < ../package/path
+awk '$1{package=$1};END{print "\\newcommand{\\package}{" package "}"}' < ../package/name

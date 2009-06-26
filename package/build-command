@@ -1,0 +1,52 @@
+#!/bin/sh
+shout() { echo "package/build-command: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "usage: package/build-command [ --help -v N ] command compile target ..."
+  exit 100
+}
+####
+verbose="1"
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    -v)
+      shift
+      verbose="$1"
+      shift
+      ;;
+    -*)
+      usage
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+[ "$1" = "--help" ] && usage
+#####
+# NB: May have no targets.
+[ $# -ge 2 ] || usage
+command="$1"
+compile="$2"
+shift; shift
+####
+umask 022
+[ -d package	] || barf "no package directory"
+[ -d "$compile" ] || barf "no $compile directory"
+here=`env - PATH=$PATH pwd`
+# FIXME: Still needed?
+PATH="$here/$compile:/$command:$PATH"
+export PATH
+#
+safe mkdir -p "$command"
+for i in ${1+"$@"}
+do
+  safe rm -f "$command/$i"'{new}'
+  safe cp -p "$compile/$i" "$command/$i"'{new}'
+  safe mv -f "$command/$i"'{new}' "$command/$i"
+done
+
+exit 0
+

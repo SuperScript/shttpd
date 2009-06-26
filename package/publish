@@ -3,27 +3,38 @@ shout() { echo "package/publish: $@" >&2; }
 barf() { shout "fatal: $@"; exit 111; }
 safe() { "$@" || barf "cannot $@"; }
 usage() {
-  shout "usage: package/publish [ --help ] [ file ... ]"
+  shout "usage: package/publish [ --help ] dest src [ file ... ]"
   exit 100
 }
 ####
+[ $# -lt 2 ] && usage
+dest="$1"
+src="$2"
+shift; shift
+####
 umask 022
 [ -d package ] || barf "no package directory"
-[ -d src     ] || barf "no src directory"
+[ -d "$src"  ] || barf "no $src directory"
 here=`env - PATH=$PATH pwd`
-PATH="$here/compile:/command:$PATH"
-export PATH
 #
 [ "$1" = "--help" ] && usage
 #
-safe cd compile
+safe cd "$src"
 #
-dest="`head -1 "$here/package/publish-dest"`"
+findhostdir() {
+  awk '
+    $1 == hostdir { print $2; exit 0 }
+  ' hostdir="$1" < "$here/package/publish-dest"
+}
+hostdir="`findhostdir "$dest:$src"`"
+[ "X" = "X$hostdir" ] && barf "unknown publication spec: $dest:$src"
 publish="`head -1 "$here/package/publish-cmd"`"
+####
 if [ $# -gt 0 ]
 then
-  safe $publish "$@" "$dest"
+  safe $publish "$@" "$hostdir"
 else
-  safe $publish `cat "$here/package/publish-files"` "$dest"
+  safe $publish `cat "$here/package/publish-$src"` "$hostdir"
 fi
 exit 0
+

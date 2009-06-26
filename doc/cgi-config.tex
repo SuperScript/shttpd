@@ -1,36 +1,33 @@
-%& sstdoc
-\banner{shttpd}
+\documentclass{book}
+\usepackage{sstdef}
+\title{shttpd}
 \begin{document}
-\image{../sstlogo.gif}{sstlogo}
-\parent{../superscript}{\SST}
-\parent{../software}{Software}
-\parent{intro}{shttpd}
-\chapter{The \cmd{cgi-config} program}
+\section{The \cmd{cgi-config} program}
 
-\section{Interface}
+\subsection{Interface}
 \begin{code}
-  cgi-config \arg{user} \arg{loguser} \arg{dir} \arg{port} \arg{prog}
+  cgi-config \var{user} \var{loguser} \var{dir} \var{port} \var{prog}
 \end{code}
-where \carg{user} and \carg{loguser} are system account names,
-\carg{dir} is an absolute path name, and \carg{port} is a TCP port,
-and \carg{prog} is one or more arguments specifying a program to run
+where \cvar{user} and \cvar{loguser} are system account names,
+\cvar{dir} is an absolute path name, and \cvar{port} is a TCP port,
+and \cvar{prog} is one or more arguments specifying a program to run
 for each valid cgi request.  The port may be specified as a name from
 \cmd{/etc/services} or a numeric value.
 
-\cmd{cgi-config} creates the directory \carg{dir} as an
+\cmd{cgi-config} creates the directory \cvar{dir} as an
 \href{svscan}{http://cr.yp.to/daemontools/svscan.html}-format service
 directory, configured to run \cmd{cgi-httpd} on the TCP port
-\carg{port}, running \cmd{cgi-httpd} as \carg{user} and creating log
-files as \carg{loguser}, and executing \carg{prog} for each cgi
+\cvar{port}, running \cmd{cgi-httpd} as \cvar{user} and creating log
+files as \cvar{loguser}, and executing \cvar{prog} for each cgi
 request it receives.
 
-\cmd{cgi-config} creates the directory \cmd{\arg{dir}/env}
+\cmd{cgi-config} creates the directory \cmd{\var{dir}/env}
 containing files that establish runtime environment variables for
 \cmd{cgi-httpd} via \href{envdir}{http://cr.yp.to/daemontools/envdir.html}.
 
-\cmd{cgi-config} creates the directory \cmd{\arg{dir}/root} for
+\cmd{cgi-config} creates the directory \cmd{\var{dir}/root} for
 \cmd{cgi-httpd} to use as its root directory.  \cmd{cgi-config} also
-creates \cmd{\arg{dir}/root/bin} to hold cgi executable files, and
-\cmd{\arg{dir}/root/host} to hold the per-host working directories.
+creates \cmd{\var{dir}/root/bin} to hold cgi executable files, and
+\cmd{\var{dir}/root/host} to hold the per-host working directories.
 
 \end{document}

@@ -1,17 +1,14 @@
-%& sstdoc
-\banner{shttpd}
+\documentclass{book}
+\usepackage{sstdef}
+\title{shttpd}
 \begin{document}
-\image{../sstlogo.gif}{sstlogo}
-\parent{../superscript}{\SST}
-\parent{../software}{Software}
-\parent{intro}{shttpd}
-\chapter{The \cmd{cgi-httpd} program}
+\section{The \cmd{cgi-httpd} program}
 
-\section{Interface}
+\subsection{Interface}
 \begin{code}
-  cgi-httpd \arg{prog}
+  cgi-httpd \var{prog}
 \end{code}
-where \carg{prog} is one or more arguments specifying a program to run
+where \cvar{prog} is one or more arguments specifying a program to run
 for each valid request.
 
 \cmd{cgi-httpd} reads an HTTP request message from standard input,
@@ -23,20 +20,20 @@ named in the \cmd{\$ROOT} environment variable, performs \cmd{chroot} to the
 current directory, and then sets its group id and user id to the numeric values
 given in the environment variables \cmd{\$GID} and \cmd{\$UID}, typically set
 with \href{\cmd{envdir}}{http://cr.yp.to/daemontools/envdir.html}.  Before
-executing \carg{prog}, \cmd{cgi-httpd} sets the execution path to \cmd{/bin}.
+executing \cvar{prog}, \cmd{cgi-httpd} sets the execution path to \cmd{/bin}.
 If it cannot carry out these operations, \cmd{cgi-httpd} complains to standard
 output and exits 111.
 
 If it encounters an error in processing a request, \cmd{cgi-httpd}
-exits 21.  Otherwise, it returns the exit code of \carg{prog}.
+exits 21.  Otherwise, it returns the exit code of \cvar{prog}.
 
-For a request specifying the hostname \carg{H}, \cmd{cgi-httpd}
-changes its working directory to \cmd{./host/\carg{H}} after replacing
+For a request specifying the hostname \cvar{H}, \cmd{cgi-httpd}
+changes its working directory to \cmd{./host/\cvar{H}} after replacing
 \cmd{/.}  with \cmd{/:} and \cmd{//} with \cmd{/} in
-\cmd{./host/\carg{H}}.  When a valid request lacks a host name,
+\cmd{./host/\cvar{H}}.  When a valid request lacks a host name,
 \cmd{cgi-httpd} uses \cmd{0} as the host name.  After changing the
 working directory, \cmd{cgi-httpd} sets the cgi environment variables
-and executes \carg{prog}.
+and executes \cvar{prog}.
 
 \cmd{cgi-httpd} accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1 requests.  It
 supports HEAD, GET, and POST, and rejects all other methods.
@@ -81,7 +78,7 @@ applicable, and 0 otherwise.
 \cmd{\$SERVER_SOFTWARE} is the string \cmd{cgi-httpd}.
 
 
-\section{Examples}
+\subsection{Examples}
 The \cmd{cgi-example} program running under \cmd{cgi-httpd} provides
 an example of a single-address, single-form cgi server.  These
 instructions assume that the user accounts \cmd{shttp} and
@@ -95,7 +92,7 @@ Create a directory to house shttpd service directories, for example:
 
 Configure a \cmd{cgi-example} server to listen on a port of your choice:
 \begin{code}
-  cgi-config shttp shttplog /usr/local/shttpd/service/cgi-example \arg{port} cgi-example
+  cgi-config shttp shttplog /usr/local/shttpd/service/cgi-example \var{port} cgi-example
 \end{code}
 
 Copy \cmd{cgi-example} to
@@ -106,9 +103,9 @@ package.  Copy the executables \cmd{foldlines}, \cmd{revline},
 \cmd{rot13}, and \cmd{wrapcr} to
 \cmd{/usr/local/shttpd/service/cgi-example/root/bin}.
 
-For each \carg{hostname} you wish accept in requests, create the
+For each \cvar{hostname} you wish accept in requests, create the
 directory
-\cmd{/usr/local/shttpd/service/cgi-example/root/host/\arg{hostname}}.
+\cmd{/usr/local/shttpd/service/cgi-example/root/host/\var{hostname}}.
 
 Finally, start the service under \cmd{svscan}:
 \begin{code}

@@ -1,28 +1,25 @@
-%& sstdoc
-\banner{shttpd}
+\documentclass{book}
+\usepackage{sstdef}
+\title{shttpd}
 \begin{document}
-\image{../sstlogo.gif}{sstlogo}
-\parent{../superscript}{\SST}
-\parent{../software}{Software}
-\parent{intro}{shttpd}
-\chapter{How to install shttpd}
+\section{How to install shttpd}
 
 shttpd comes with NO WARRANTY.
 
-\section{System requirements}
+\subsection{System requirements}
 shttpd works only under UNIX.
 
-Optional testing requires user accounts \cmd{shttp} and \cmd{shttplog}.
+Running regression tests requires user accounts \cmd{shttp} and \cmd{shttplog}.
 
-\section{Installation}
+\subsection{Installation}
 Download the shttpd package.  The most recent shttpd package is
-\href{\version{shttpd}}{\package{shttpd}.tar.gz}.
+\href{\version}{\package-\version.tar.gz}.
 
 Unpack the shttpd package:
 \begin{code}
-  gunzip \package{shttpd}.tar
-  tar -xf \package{shttpd}.tar
-  cd \package{shttpd}
+  gunzip \package.tar
+  tar -xf \package.tar
+  cd \package
 \end{code}
 
 Compile the shttpd programs:
@@ -39,7 +36,7 @@ or skip the tests.  Normally, the tests produce no output:
 \end{code}
 If the tests fail, manually compare their output with the expected results:
 \begin{code}
-  ./rts \>rts.out
+  ./rts \string> rts.out
   diff rts.out rts.exp
 \end{code}
 

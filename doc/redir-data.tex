@@ -1,13 +1,10 @@
-%& sstdoc
-\banner{shttpd}
+\documentclass{book}
+\usepackage{sstdef}
+\title{shttpd}
 \begin{document}
-\image{../sstlogo.gif}{sstlogo}
-\parent{../superscript}{\SST}
-\parent{../software}{Software}
-\parent{intro}{shttpd}
-\chapter{The \cmd{redir-data} program}
+\section{The \cmd{redir-data} program}
 
-\section{Interface}
+\subsection{Interface}
 \begin{code}
   redir-data
 \end{code}
@@ -17,7 +14,7 @@ the file \cmd{data} for use by \href{\cmd{redir-httpd}}{redir-httpd.html}.  It
 may use other files with names beginning with \cmd{data}.  The update to
 \cmd{data.cdb} occurs atomically.
 
-\section{Data format}
+\subsection{Data format}
 
 Each redirection command in \cmd{data} consists of a single line with two
 '\cmd{\#}'-separated fields.  The first field is a request path, and the second

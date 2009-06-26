@@ -1,4 +1,4 @@
-rsync -avzR --delete -L --rsh=ssh
+rsync -avzR -L --rsh=ssh
 
 The first line of this file gives the command for publishing elements with
 package/publish.

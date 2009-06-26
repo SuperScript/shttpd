@@ -1,0 +1,75 @@
+#!/bin/sh
+shout() { echo "package/build-run: $@" >&2; }
+barf() { shout "fatal: $@"; exit 111; }
+safe() { "$@" || barf "cannot $@"; }
+usage() {
+  shout "usage: package/build-run [ --help -v N -f ] compile src mode target ..."
+  exit 100
+}
+####
+verbose="1"
+force=""
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    -f)
+      force="-f"
+      shift
+      ;;
+    -v)
+      shift
+      verbose="$1"
+      shift
+      ;;
+    -*)
+      usage
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+[ "$1" = "--help" ] && usage
+#####
+# NB: May have no targets.
+[ $# -ge 3 ] || usage
+compile="$1"
+src="$2"
+mode="$3"
+shift; shift; shift
+####
+umask 022
+[ -d package ] || barf "no package directory"
+[ -d "$src"     ] || barf "no $src directory"
+here=`env - PATH=$PATH pwd`
+# FIXME: Still needed?
+PATH="$here/$compile:/command:$PATH"
+export PATH
+#
+safe mkdir -p "$compile"
+safe package/build-linksrc "$compile" "$src"
+safe cd "$compile"
+#
+if [ -r .build.sig ]
+then
+  :
+else
+  { { which md5 >/dev/null && echo md5 -q; } \
+    || { which md5sum >/dev/null && echo md5sum; } \
+    || echo cksum 
+  } > .build.sig
+fi
+#
+build_cmd="$here/package/build-targ"
+build_opt="-v $verbose $force"
+# FIXME: options for make.
+case "$mode" in
+  compile)
+    build_cmd="make"
+    build_opt=""
+    ;;
+esac
+
+safe "$build_cmd" $build_opt ${1+"$@"}
+
+exit 0

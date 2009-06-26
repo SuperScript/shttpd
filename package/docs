@@ -1,9 +1,9 @@
 #!/bin/sh
-shout() { echo "package/compile: $@" >&2; }
+shout() { echo "package/docs: $@" >&2; }
 barf() { shout "fatal: $@"; exit 111; }
 safe() { "$@" || barf "cannot $@"; }
 usage() {
-  shout "usage: package/compile [ --help ] [ target ... ]"
+  shout "usage: package/docs [ --help -v N ] [ target ... ]"
   exit 100
 }
 ####
@@ -11,8 +11,6 @@ umask 022
 [ -d package ] || barf "no package directory"
 [ -d src     ] || barf "no src directory"
 here=`env - PATH=$PATH pwd`
-#PATH="$here/compile:/command:$PATH"
-#export PATH
 #
 [ "$1" = "--help" ] && usage
 #
@@ -26,17 +24,17 @@ fi
 #
 if [ $# -gt 0 ]
 then
-  safe package/build-run compile src compile "$@"
-  safe package/build-command command compile `awk '
+  safe package/build-run compile-doc doc build "$@"
+  safe package/build-command html compile-doc `awk '
     BEGIN {
       for (i = 1;i < ARGC; ++i)
 	file[ARGV[i]] = 1
       ARGC = 1
     }
     { if (file[$1]) print $1 }
-  ' "$@" < package/commands`
+  ' "$@" < package/html`
 else
-  safe package/build-run compile src compile it
-  safe package/build-command command compile `cat package/commands`
+  safe package/build-run compile-doc doc build it
+  safe package/build-command html compile-doc `cat package/html`
 fi
 exit 0

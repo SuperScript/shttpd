@@ -1,22 +1,19 @@
-%& sstdoc
-\banner{shttpd}
+\documentclass{book}
+\usepackage{sstdef}
+\title{shttpd}
 \begin{document}
-\image{../sstlogo.gif}{sstlogo}
-\parent{../superscript}{\SST}
-\parent{../software}{Software}
-\parent{intro}{shttpd}
-\chapter{The \cmd{cgiuser-httpd} program}
+\section{The \cmd{cgiuser-httpd} program}
 
-\section{Interface}
+\subsection{Interface}
 \begin{code}
-  cgiuser-httpd \arg{prog}
+  cgiuser-httpd \var{prog}
 \end{code}
-where \carg{prog} is one or more arguments specifying a program to run
+where \cvar{prog} is one or more arguments specifying a program to run
 for each valid request.
 
 \cmd{cgiuser-httpd} behaves like \href{\cmd{cgi-httpd}}{cgi-httpd.html} with two
 exceptions: \cmd{cgiuser-httpd} does not invoke \cmd{chroot}, and it sets the
-execution path to \cmd{/bin:/usr/bin} before invoking \carg{prog}.
+execution path to \cmd{/bin:/usr/bin} before invoking \cvar{prog}.
 
 \cmd{cgiuser-httpd} reads an HTTP request message from standard input,
 and treats the URI path as the name of a CGI script.  The script is
@@ -27,20 +24,20 @@ that named in the \cmd{\$ROOT} environment variable, and then sets its group id
 and user id to the numeric values given in the environment variables \cmd{\$GID}
 and \cmd{\$UID}, typically set with
 \href{\cmd{envdir}}{http://cr.yp.to/daemontools/envdir.html}.  Before executing
-\carg{prog}, \cmd{cgiuser-httpd} sets the execution path to \cmd{/bin:/usr/bin}.
+\cvar{prog}, \cmd{cgiuser-httpd} sets the execution path to \cmd{/bin:/usr/bin}.
 If it cannot carry out these operations, \cmd{cgiuser-httpd} complains to
 standard output and exits 111.
 
 If it encounters an error in processing a request, \cmd{cgiuser-httpd}
-exits 21.  Otherwise, it returns the exit code of \carg{prog}.
+exits 21.  Otherwise, it returns the exit code of \cvar{prog}.
 
-For a request specifying the hostname \carg{H}, \cmd{cgiuser-httpd}
-changes its working directory to \cmd{./host/\carg{H}} after replacing
+For a request specifying the hostname \cvar{H}, \cmd{cgiuser-httpd}
+changes its working directory to \cmd{./host/\cvar{H}} after replacing
 \cmd{/.}  with \cmd{/:} and \cmd{//} with \cmd{/} in
-\cmd{./host/\carg{H}}.  When a valid request lacks a host name,
+\cmd{./host/\cvar{H}}.  When a valid request lacks a host name,
 \cmd{cgiuser-httpd} uses \cmd{0} as the host name.  After changing the
 working directory, \cmd{cgiuser-httpd} sets the cgi environment variables
-and executes \carg{prog}.
+and executes \cvar{prog}.
 
 \cmd{cgiuser-httpd} accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1 requests.  It
 supports HEAD, GET, and POST, and rejects all other methods.

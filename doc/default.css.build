@@ -1,0 +1,11 @@
+build_notarget
+build_ifchanged "$2.tex" sst.cfg sstdef.sty sst4ht.sty sstpackage.sty
+for f in `ls "$2".*`
+do
+  # Colossal stupidity, but tex4ht doesn't appear to recognize errors.
+  [ "$f" = "$2.tex" ] && continue
+  [ "$f" = "$2.html" ] && continue
+  rm -f "$f"
+done
+htlatex "$2.tex" "sst.cfg" "" ""
+exit $?

@@ -1,0 +1,39 @@
+\usepackage{times}
+\setlength{\parindent}{\z@}
+
+\Configure{section}{\sst@crumbs{\package}}{}{}{}
+
+\newcommand{\sst@crumb}[2]{%
+  \HCode{&nbsp;::&nbsp;<a class="sstcrumb" href="#1">#2</a>}%
+}
+\newcommand{\sst@crumbs}[1]{%
+  \ifHtml 
+    \HCode{<div class="sstcrumb">}%
+    \HCode{<a class="sstcrumb" href="../index.html"><img
+      class="ssthome"
+      src="../sstlogo.gif"
+      alt="SuperScript"></a>}%
+    \sst@crumb@leader
+    \HCode{&nbsp;::&nbsp;<a class="sstcrumb" href="index.html">#1</a>}%
+    \HCode{</div>\Hnewline}%
+  \fi
+}
+
+\newcommand{\sst@crumb@leader}{%
+  \sst@crumb{../software.html}{Software}%
+}
+
+%%%%
+
+\Configure{TITLE+}{\@title}
+\Configure{@HEAD}{%
+  \HCode{\Hnewline<link rel="shortcut icon" href="../favicon.ico">\Hnewline}%
+}
+\Configure{@HEAD}{%
+  \HCode{\Hnewline<!-- Copyright &copy; 2009 by SuperScript Technology, Inc.  All rights reserved. -->\Hnewline}%
+}
+\Configure{@/BODY}{%
+  \ifvmode\IgnorePar\fi\EndP
+  \HCode{\Hnewline<div class="sstcopyright"><p class="noindent">Copyright&nbsp;&copy;&nbsp;2009 by SuperScript Technology, Inc.  All rights reserved.</p></div>\Hnewline}%
+}
+

@@ -29,7 +29,7 @@ build_ifchanged() {
 }
 
 build_notarget() {
-  rm -f "$build_it_tmp"
+  rm -f -- "$build_it_tmp"
 }
 
 # Create intermediate directories as needed.
@@ -141,11 +141,6 @@ build_failed() {
   barf "build failed: $build_it_target: $*"
 }
 
-# In keeping with other prefixed commands.
-build_safe() {
-  safe ${1+"$@"}
-}
-
 build_dependcc() {
   $awk \
   '
@@ -246,7 +241,7 @@ build_it() {
   rcode="$?"
   if [ $rcode -ne 0 ]
   then
-    rm -f "$build_it_tmp"
+    rm -f -- "$build_it_tmp"
     barf "cannot build: $build_it_target"
   fi
 
@@ -305,15 +300,18 @@ done
 
 [ $verbose -ge 2 ] && shout "args: $*"
 
+# Remove all targets before building anything.
+# Less efficient, but avoids introducing target order dependency.
 if [ $force -eq 1 ]
 then
-  targets="`"$home/build-uptodate" -v $verbose -b "$db_file" targets`"
-  [ $? -eq 0 ] || barf "cannot "$home/build-uptodate" -v $verbose -b $db_file targets"
-  [ "X" = "X$targets" ] || safe rm $targets
-  [ -r  "$db_file" ] && safe rm "$db_file"
+  for target in ${1+"$@"}
+  do
+    [ $? -eq 0 ] || barf "cannot "$home/build-uptodate" -v $verbose -b $db_file remove $target"
+    safe rm -f -- "$target"
+  done
 fi
 
-for target in "$@"
+for target in ${1+"$@"}
 do
   case "$target" in
     ./*)

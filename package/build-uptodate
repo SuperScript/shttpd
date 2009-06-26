@@ -8,6 +8,7 @@ safe() { "$@" || barf "cannot $@"; }
 # Three actions are supported:
 #   check     check whether the file is up to date
 #   setstat   add or set info for a file in the stat section
+#   remove    remove info for a file from the stat section (force later rebuild)
 #   deps      add a list of dependencies to the deps section
 #   commit    mark the file as up to date
 #   targets   list the targets
@@ -44,7 +45,7 @@ safe() { "$@" || barf "cannot $@"; }
 # S, or T.  If a target is up to date, then none of its dependencies have type B.
 
 usage() {
-  shout "usage: build-uptodate [ -l -L -b file ] sig|check|setstat|deps|commit|makefile [ arg ...]" >&2
+  shout "usage: build-uptodate [ -v n -l -L -b file ] sig|check|remove|setstat|deps|commit|makefile [ arg ...]" >&2
   exit 100;
 }
 
@@ -97,7 +98,7 @@ check() {
       cmd | getline filesig
       close(cmd)
       sp = index(filesig," ")
-      if (sp) { filesig = substr(filesig,1,sp); }
+      if (sp) { filesig = substr(filesig,1,sp - 1); }
       trace(1,f ": " s[f] " " filesig)
       return (s[f] == filesig)
     }
@@ -153,7 +154,9 @@ check() {
 	    leave("T","target removed " $1)
 
 	  if ($1 == target) {
-	    trace(2,"self always uptodate " $1)
+	    trace(2,"target self " $1)
+	    if (!sig_match(sig,$1))
+	      leave("T","self stat sig mismatch " $1)
 	    next
 	  }
 
@@ -252,6 +255,9 @@ check() {
 }
 
 # usage: setstat N|S|T|B file
+# Inject new stat lines immediately after =STAT
+# Eliminate old stat lines.
+# Eliminate old deps lines.
 setstat() {
   $awk \
   '
@@ -268,6 +274,7 @@ setstat() {
       exit e
     }
 
+    # Add new stat lines immediately after =STAT.
     function stat_section(f,t) {
       print "=STAT"
       if ("N" == t) {
@@ -282,7 +289,7 @@ setstat() {
 	if ("" == filesig)
 	  leave(99,"cannot obtain file sig")
 	sp = index(filesig," ")
-	if (sp) { filesig = substr(filesig,1,sp); }
+	if (sp) { filesig = substr(filesig,1,sp - 1); }
 	trace(1,f " S " filesig)
 	print f " S " filesig
       }
@@ -292,6 +299,7 @@ setstat() {
       }
     }
 
+    # Preserve =DEPS line.  Nothing to add.
     function deps_section() {
       print "=DEPS"
     }
@@ -324,6 +332,7 @@ setstat() {
       next
     }
 
+    # Remove old appearances in =STAT.
     "s" == section {
       # Eliminate old stat listings.
       if ($1 == target)
@@ -331,6 +340,93 @@ setstat() {
       print $0
     }
 
+    # Remove old appearances in =DEPS.
+    "d" == section {
+      # Eliminate old target listings.
+      if ($1 == target)
+	next
+      print $0
+    }
+
+    END {
+      if (0 <= rcode)
+	exit rcode
+
+      if ("b" == section) {
+	stat_section(target,type)
+	section = "s"
+      }
+      if ("s" == section)
+	deps_section()
+
+      exit 0
+    }
+  ' ${1+"$@"}
+}
+
+# usage: remove file
+# Eliminate old stat lines.
+# Eliminate old deps lines.
+remove() {
+  $awk \
+  '
+    function trace(n,s) {
+      if (1 < verbose) {
+	print "build-uptodate: remove: " s | "cat - >&2"
+	close("cat - >&2")
+      }
+    }
+
+    function leave(e,msg) {
+      trace(1,msg)
+      rcode = e
+      exit e
+    }
+
+    # Preserve =STAT line.  Nothing to add.
+    function stat_section(f,t) {
+      print "=STAT"
+    }
+
+    # Preserve =STAT line.  Nothing to add.
+    function deps_section() {
+      print "=DEPS"
+    }
+
+    BEGIN {
+      rcode = -1
+      section = "b"
+      # So that we print a usage error.
+      verbose = 2
+      # ARGV[1] is verbose=setting
+      # ARGV[2] is sigprog=setting
+      target = ARGV[3]
+      ARGC = 2
+    }
+
+    /^=STAT$/ {
+      section = "s"
+      stat_section(target,type)
+      next
+    }
+
+    /^=DEPS$/ {
+      if ("b" == section)
+	stat_section(target,type)
+      section = "d"
+      deps_section()
+      next
+    }
+
+    # Remove old appearances in =STAT.
+    "s" == section {
+      # Eliminate old stat listings.
+      if ($1 == target)
+	next
+      print $0
+    }
+
+    # Remove old appearances in =DEPS.
     "d" == section {
       # Eliminate old target listings.
       if ($1 == target)
@@ -355,6 +451,7 @@ setstat() {
 }
 
 # usage: deps target [ dep ... ]
+# Inject new deps lines immediately before first dependency.
 deps() {
   $awk \
   '
@@ -460,6 +557,8 @@ deps() {
 }
 
 # usage: commmit target
+# Update stat line for target from B to T.
+# Trivial success if not currently B.
 commit() {
   $awk \
   '
@@ -540,7 +639,7 @@ commit() {
 	if ("" == filesig)
 	  leave(99,"cannot obtain file sig")
 	sp = index(filesig," ")
-	if (sp) { filesig = substr(filesig,1,sp); }
+	if (sp) { filesig = substr(filesig,1,sp - 1); }
       }
       trace(1,target " T " filesig)
       print target " T " filesig
@@ -565,6 +664,8 @@ commit() {
 }
 
 # usage: targets
+# List all targets in DB.
+# List iff stat is B or T.
 targets() {
   $awk \
   '
@@ -606,6 +707,7 @@ targets() {
 }
 
 # usage: makefile
+# Construct a Makefile from the DB.
 makefile() {
   $awk \
   '
@@ -750,7 +852,7 @@ case "$action" in
     $action verbose="$verbose" sigprog="$sigprog" ${1+"$@"} < "$file"
     ;;
 
-  setstat|deps|commit)
+  remove|setstat|deps|commit)
     lockfile="$file.lock"
     tmpfile="$file.tmp"
     if [ -f "$file" ]
@@ -764,6 +866,7 @@ case "$action" in
 
     [ $verbose -ge 2 ] && shout "args: $action $*"
     ( safe "$action" verbose="$verbose" sigprog="$sigprog" ${1+"$@"} < "$input" > "$tmpfile"
+# Not on Linux.
 #      safe fsync "$tmpfile"
       safe mv "$tmpfile" "$file"
     ) || {
