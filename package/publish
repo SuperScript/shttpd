@@ -34,7 +34,7 @@ if [ $# -gt 0 ]
 then
   safe $publish "$@" "$hostdir"
 else
-  safe $publish `cat "$here/package/publish-$src"` "$hostdir"
+  safe $publish ./ "$hostdir"
 fi
 exit 0
 
