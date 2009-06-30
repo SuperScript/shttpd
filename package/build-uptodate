@@ -51,9 +51,6 @@ usage() {
 
 awk="`{ which gawk >/dev/null && echo gawk; } || { which nawk >/dev/null && echo nawk; } || echo awk`"
 
-[ -r .build.sig ] || barf "no sig program"
-sigprog="`head -1 ./.build.sig`"
-
 # usage: check file
 # exits 0
 # prints:
@@ -67,6 +64,9 @@ sigprog="`head -1 ./.build.sig`"
 #
 
 check() {
+  [ -r .build.sig ] || barf "no sig program"
+  sigprog="`head -1 ./.build.sig`"
+
   $awk \
   '
     function trace(n,s) {
@@ -368,6 +368,7 @@ setstat() {
 # Eliminate old stat lines.
 # Eliminate old deps lines.
 remove() {
+  # Don't look for sig prog, not needed.
   $awk \
   '
     function trace(n,s) {
@@ -849,10 +850,22 @@ case "$action" in
   sig|check|targets|makefile)
     [ $verbose -ge 2 ] && shout "args: $action $*"
     [ -f "$file" ] || file="/dev/null"
+
+    [ -r .build.sig ] || barf "no sig program"
+    sigprog="`head -1 ./.build.sig`"
+
     $action verbose="$verbose" sigprog="$sigprog" ${1+"$@"} < "$file"
     ;;
 
   remove|setstat|deps|commit)
+    if [ "remove" = "$action" ]
+    then
+      sigprog="exit 100 No sig program"
+    else
+      [ -r .build.sig ] || barf "no sig program"
+      sigprog="`head -1 ./.build.sig`"
+    fi
+
     lockfile="$file.lock"
     tmpfile="$file.tmp"
     if [ -f "$file" ]
