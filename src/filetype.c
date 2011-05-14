@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "filetype.h"
 #include "str.h"
 

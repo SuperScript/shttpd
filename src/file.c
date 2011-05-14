@@ -10,7 +10,7 @@
 #include "env.h"
 #include "open.h"
 
-static void log(const char *fn,const char *result1,const char *result2,int flagread)
+static void mylog(const char *fn,const char *result1,const char *result2,int flagread)
 {
   int i;
   char ch;
@@ -45,37 +45,37 @@ int file_open(const char *fn,struct tai *mtime,unsigned long *length,int flagrea
 
   fd = open_read(fn);
   if (fd == -1) {
-    log(fn,": open failed: ",error_str(errno),flagread);
+    mylog(fn,": open failed: ",error_str(errno),flagread);
     if (error_temp(errno)) _exit(23);
     return -1;
   }
   if (fstat(fd,&st) == -1) {
-    log(fn,": fstat failed: ",error_str(errno),flagread);
+    mylog(fn,": fstat failed: ",error_str(errno),flagread);
     close(fd);
     if (error_temp(errno)) _exit(23);
     return -1;
   }
   if ((st.st_mode & 0444) != 0444) {
-    log(fn,": ","not ugo+r",flagread);
+    mylog(fn,": ","not ugo+r",flagread);
     close(fd);
     errno = error_acces;
     return -1;
   }
   if ((st.st_mode & 0101) == 0001) {
-    log(fn,": ","o+x but u-x",flagread);
+    mylog(fn,": ","o+x but u-x",flagread);
     close(fd);
     errno = error_acces;
     return -1;
   }
   if (flagread)
     if ((st.st_mode & S_IFMT) != S_IFREG) {
-      log(fn,": ","not a regular file",flagread);
+      mylog(fn,": ","not a regular file",flagread);
       close(fd);
       errno = error_acces;
       return -1;
     }
 
-  log(fn,": ","success",flagread);
+  mylog(fn,": ","success",flagread);
 
   *length = st.st_size;
   tai_unix(mtime,st.st_mtime);
