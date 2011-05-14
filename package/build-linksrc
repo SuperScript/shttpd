@@ -38,6 +38,14 @@ safe cd "$compile"
 ( exec 2>&3
   ( safe cd "$src"; safe find ./ ) | while read f
   do
+    case "$f" in
+      ./.*)
+	continue
+	;;
+      *)
+	:
+	;;
+    esac
     if [ -d "$src/$f" ]
     then
       safe mkdir -p "$f"
