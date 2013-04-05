@@ -1,0 +1,39 @@
+= constant-config (1)
+:doctype: manpage
+
+== NAME
+constant-config - configure an instance of constant-httpd
+
+== SYNOPSIS 
+!!!!
+constant-config !user! !loguser! !dir! !port! +!file!+
+!!!!
+
+== DESCRIPTION 
+
+The +constant-config+ program configures an instance of +constant-httpd+ to
+run as +!user!+ and log as +!loguser!+, listen on TCP port +!port!+ (a name
+from +/etc/services+ or a numeric value), and run +!prog!+ (all remaining
+arguments) for each valid cgi request.
+
+The +constant-config+ program creates the directory +!dir!+ (an absolute path)
+as an http://cr.yp.to/daemontools/svscan.html[svscan]-format service
+directory.
+
+The +constant-config+ program creates the directory +!dir!/env+ containing
+files that establish runtime environment variables for +constant-httpd+ via
+http://cr.yp.to/daemontools/envdir.html[envdir].  It creates an empty
++!dir!/env/REQUESTHOST+, causing +constant-httpd+ to respect the host named in
+each request.  To force +constant-httpd+ to use a particular host name,
+overriding the host obtained from a request, edit +!dir!/env/REQUESTHOST+
+after running +constant-config+.
+
+The +constant-config+ program creates the directory +!dir!/root+ for
++constant-httpd+ to use as its root directory. 
+
+== SEE ALSO 
+The link:constant-httpd.html[+constant-httpd+] program.
+
+== AUTHOR
+
+William Baxter <sst@superscript.com>

@@ -1,0 +1,26 @@
+= echo-config (1)
+:doctype: manpage
+
+== NAME
+echo-config - configure an instance of echo-httpd
+
+== SYNOPSIS 
+!!!!
+echo-config !user! !loguser! !dir! !port!
+!!!!
+
+== DESCRIPTION 
+
+The +echo-config+ program configures an instance of +echo-httpd+ to run as
++!user!+ and log as +!loguser!+, listen on TCP port +!port!+ (a name from
++/etc/services+ or a numeric value).
+
+The +echo-config+ program creates the directory +!dir!+ (an absolute path) as
+an http://cr.yp.to/daemontools/svscan.html[svscan]-format service directory.
+
+== SEE ALSO 
+The link:echo-httpd.html[+echo-httpd+] program.
+
+== AUTHOR
+
+William Baxter <sst@superscript.com>

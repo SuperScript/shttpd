@@ -1,0 +1,38 @@
+= cgiuser-config (1)
+:doctype: manpage
+
+== NAME
+cgiuser-config - configure an instance of cgiuser-httpd
+
+== SYNOPSIS 
+!!!!
+cgiuser-config !user! !loguser! !dir! !port! !prog!
+!!!!
+
+== DESCRIPTION 
+
+The +cgiuser-config+ program configures an instance of +cgiuser-httpd+ to run
+as +!user!+ and log as +!loguser!+, listen on TCP port +!port!+ (a name from 
++/etc/services+ or a numeric value), and run +!prog!+ (all remaining
+arguments) for each valid cgi request.
+
+The +cgiuser-config+ program creates the directory +!dir!+ (an absolute path)
+as an http://cr.yp.to/daemontools/svscan.html[svscan]-format service
+directory.
+
+The +cgiuser-config+ program creates the directory +!dir!/env+ containing
+files that establish runtime environment variables for +cgiuser-httpd+ via
+http://cr.yp.to/daemontools/envdir.html[envdir].
+
+The +cgiuser-config+ program creates the directory +!dir!/root+ for
++cgiuser-httpd+ to use as its root directory.  It also creates
++!dir!/root/host+ to hold the per-host working directories.
+
+
+== SEE ALSO 
+The link:cgiuser-httpd.html[+cgiuser-httpd+] program.
+
+== BUGS 
+
+== AUTHOR
+William Baxter <sst@superscript.com>

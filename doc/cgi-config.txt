@@ -1,0 +1,37 @@
+= cgi-config (1)
+:doctype: manpage
+
+== NAME
+cgi-config - configure an instance of cgi-httpd
+
+== SYNOPSIS 
+!!!!
+cgi-config !user! !loguser! !dir! !port! !prog!
+!!!!
+
+== DESCRIPTION 
+
+The +cgi-config+ program configures an instance of +cgi-httpd+ to run as
++!user!+ and log as +!loguser!+, listen on TCP port +!port!+ (a name from
++/etc/services+ or a numeric value), and run +!prog!+ (all remaining
+arguments) for each valid cgi request.
+
+The +cgi-config+ program creates the directory +!dir!+ (an absolute path) as
+an http://cr.yp.to/daemontools/svscan.html[svscan]-format service directory.
+
+The +cgi-config+ program creates the directory +!dir!/env+ containing files
+that establish runtime environment variables for +cgi-httpd+ via
+http://cr.yp.to/daemontools/envdir.html[envdir].
+
+The +cgi-config+ program creates the directory +!dir!/root+ for +cgi-httpd+ to
+use as its root directory.  It also creates +!dir!/root/bin+ to hold cgi
+executable files, and +!dir!/root/host+ to hold the per-host working
+directories.
+
+
+== SEE ALSO 
+The link:cgi-httpd.html[+cgi-httpd+] program.
+
+== AUTHOR
+
+William Baxter <sst@superscript.com>

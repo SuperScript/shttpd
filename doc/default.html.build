@@ -1,13 +1,8 @@
-build_notarget
-build_ifchanged "$2.tex" sst.cfg sstdef.sty sst4ht.sty sstpackage.sty
-for f in `ls "$2".*`
-do
-  # Colossal stupidity, but tex4ht doesn't appear to recognize errors.
-  [ "$f" = "$2.tex" ] && continue
-  [ "$f" = "$2.css" ] && continue
-  rm -f "$f"
-done
-# FIXME: TeX doesn't yield meaningful exit codes.  How to tell if run
-# succeeded?
-htlatex "$2.tex" "sst.cfg" "" ""
+build_ifchanged "$2.txt" asciidoc.conf asciidoc-html.conf webpage.conf attribute.conf
+safe asciidoc \
+  -f asciidoc.conf -f asciidoc-html.conf -f webpage.conf -f attribute.conf \
+  -o - \
+  -a disable-javascript=True -a toc\! -a linkcss=True \
+  "$2.txt"
 exit $?
+

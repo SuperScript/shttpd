@@ -1,0 +1,33 @@
+= redir-config (1)
+:doctype: manpage
+
+== NAME
+redir-config - configure an instance of redir-httpd
+
+== SYNOPSIS 
+!!!!
+redir-config !user! !loguser! !dir! !port!
+!!!!
+
+The +redir-config+ program configures an instance of +redir-httpd+ to run as
++!user!+ and log as +!loguser!+, listen on TCP port +!port!+ (a name from
++/etc/services+ or a numeric value).
+
+The +redir-config+ program creates the directory +!dir!+ as an
+http://cr.yp.to/daemontools/svscan.html[svscan]-format service directory.
+
+The +redir-config+ program creates the directory +!dir!/env+ containing files
+that establish runtime environment variables for +redir-httpd+ via
+http://cr.yp.to/daemontools/envdir.html[envdir].
+
+The +redir-config+ program creates the directory +!dir!/root+ for
++redir-httpd+ to use as its root directory.  It also creates
++!dir!/root/Makefile+ for compiling +!dir!/root/data.cdb+ with
+link:redir-data.html[+redir-data+].
+
+== SEE ALSO 
+The link:redir-httpd.html[+redir-httpd+] program.
+The link:redir-data.html[+redir-data+] program.
+
+== AUTHOR
+William Baxter <sst@superscript.com>

@@ -3,7 +3,7 @@ then
   build_ifchanged $1=x
   libscat=''
   objs=''
-  libs=`grep '\.lib *$' "$1=x" || exit 0`
+  libs="`grep '\.lib *$' "$1=x" || exit 0`"
   nonlib="`grep -v '\.lib *$' "$1=x" || exit 0`"
   for f in $nonlib
   do
@@ -30,11 +30,13 @@ fi
 if test -r $1=s
 then
   build_ifchanged $1=s makeinclude makescrip
-  scripts=`cat $1=s`
+  scripts="`cat $1=s`"
   if [ "X$scripts" = "X" ]
   then
     scripts="warn-auto.sh $1.sh"
   fi
+#  build_ifchanged `./makeinclude deps $scripts`
+  build_ifchanged $scripts
   build_ifchanged `./makeinclude deps $scripts`
   # FIXME: plumb
   ./makeinclude code $scripts | ./makescrip "$@"
@@ -56,26 +58,8 @@ case $1 in
     exit $?
     ;;
   it)
-    build_ifchanged $1=d
-    build_ifchanged `awk '{ print $1; }' <$1=d`
-#    build_ifchanged sysdeps
-    build_notarget
-    exit 0
-    ;;
-  rts)
-    if [ -r "$1=d" ]
-    then
-      build_ifchanged "$1=d"
-      build_ifchanged `awk '{ print $1; }' <$1=d`
-    else
-      build_ifcreated "$1=d"
-    fi
-    rm -f "$1.out"
-    sh "$1.run" >"$1.out" 2>&1
-    diff "$1.exp" "$1.out" || {
-      echo "Test $1 failed.  Run diff $1.exp $1.out" >&2
-      exit 1
-    }
+    build_ifchanged "$1=d"
+    build_ifchanged `awk '{ print $1; }' <"$1=d"`
     build_notarget
     exit 0
     ;;
@@ -111,11 +95,11 @@ case $1 in
     chmod 755 $3
     exit $?
     ;;
-  sysdeps)
-    build_ifchanged systype compile load `grep -l sysdep *.h 2>/dev/null || exit 0`
-    cat systype compile load
-    grep sysdep *.h 2>/dev/null || :
-    exit $?
+  man)
+    build_ifchanged "$1=d"
+    build_ifchanged `awk '{ print $1; }' <"$1=d"`
+    build_notarget
+    exit 0
     ;;
   systype)
     build_ifchanged find-systype.sh trycpp.c x86cpuid.c
