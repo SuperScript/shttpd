@@ -1,0 +1,94 @@
+= cgi-httpd (1)
+:doctype: manpage
+
+== NAME
+cgi-httpd - handle cgi requests in chroot environment
+
+== SYNOPSIS 
+!!!!
+cgi-httpd !prog!
+!!!!
+
+== DESCRIPTION 
+The +cgi-httpd+ program reads an HTTP request standard input.  It request
+header, sets up the environment, prints initial response headers, and execs
+its argument tail +!prog!+ with the body of the message on standard input, and
+standard output pointing to the network.
+
+Before reading any input, +cgi-httpd+ changes the working directory to that
+named in the +$ROOT+ environment variable, performs +chroot+ to the current
+directory, and then sets its group id and user id to the numeric values given
+in the environment variables +$GID+ and +$UID+, typically set with
+http://cr.yp.to/daemontools/envdir.html[+envdir+].  Before executing +!prog!+,
++cgi-httpd+ sets the execution path to +/bin+.  If it cannot carry out these
+operations, +cgi-httpd+ complains to standard output and exits{nbsp}111.
+
+If it encounters an error in processing a request, +cgi-httpd+ exits{nbsp}21.
+Otherwise, it returns the exit code of +!prog!+.
+
+For a request specifying the hostname +!H!+, +cgi-httpd+ changes its working
+directory to +./host/!H!+ after replacing +/.+  with +/:+ and +//+ with +/+ in
++./host/!H!+.  When a valid request lacks a host name, +cgi-httpd+ uses +0+ as
+the host name.  After changing the working directory, +cgi-httpd+ sets the cgi
+environment variables and executes +!prog!+.
+
+The +cgi-httpd+ program accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1 requests.  It
+supports HEAD, GET, and POST, and rejects all other methods.  
+It sets environment variables for +!prog!+ as follows:
+
++$AUTH_TYPE+::
+Unset.
+
++$CONTENT_LENGTH+::
+The content length of the request, if applicable, or unset.
+
++$CONTENT_TYPE+::
+The content type of the request, if applicable, or unset.
+
++$GATEWAY_INTERFACE+::
+The string +CGI/1.1+
+
++$PATH_INFO+::
+The path portion of the request URI, after URL decoding.
+
++$PATH_TRANSLATED+::
+Unset.
+
++$QUERY_STRING+::
+The query string portion of the request URI.
+
++$REMOTE_ADDR+::
+The value of the environment variable +$TCPREMOTEIP+.
+
++$REMOTE_HOST+::
+The value of the environment variable +$TCPREMOTEHOST+.
+
++$REMOTE_USER+::
+The value of the environment variable +$TCPREMOTEINFO+.
+
++$REQUEST_METHOD+::
+The method of the request URI.
+
++$SCRIPT_NAME+::
+The empty string.
+
++$SERVER_NAME+::
+The name of the host given in the request, if applicable, and +0+ otherwise.
+
++$SERVER_PORT+::
+The value of the environment variable +$TCPLOCALPORT+.
+
++$SERVER_PROTOCOL+::
+One of the strings +HTTP/0.9+, +HTTP/1.0+, or +HTTP/1.1+.
+
++$SERVER_SOFTWARE+::
+The string +cgi-httpd+.
+
+
+== SEE ALSO 
+The link:cgi-config.html[+cgi-config+] program.
+The link:cgiuser-httpd.html[+cgiuser-httpd+] program.
+
+
+== AUTHOR
+William Baxter <sst@superscript.com>

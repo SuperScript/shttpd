@@ -1,0 +1,36 @@
+= cgi-dispatch (1)
+:doctype: manpage
+
+== NAME
+cgi-dispatch - run programs under cgi-httpd
+
+== SYNOPSIS 
+!!!!
+cgi-dispatch
+!!!!
+
+== DESCRIPTION 
+The +cgi-dispatch+ program executes +./bin/!prog!+, where +!prog!+ is the
+value of the CGI environment variable +PATH_INFO+.  The +cgi-dispatch+ program
+is intended to be run under link:cgi-httpd.html[+cgi-httpd+] or
+link:cgiuser-httpd.html[+cgiuser-httpd+].
+
+Configure a server to run +cgi-dispatch+ under +cgi-shttpd+ in the directory
++ROOT+.  Copy +cgi-dispatch+ to +ROOT/bin+.  Copy programs you want
++cgi-dispatch+ to run for requests to +!host!+ into the directory
++ROOT/!host!/bin+.
+
+Before executing +!prog!+, +cgi-dispatch+ replaces +//+ with +/+ and +/.+ with
++/:+ in the program path.
+
+== EXIT STATUS 
+
+If it encounters an error in processing a request, +cgi-dispatch+ exits 21.
+If it cannot find the requested program, +cgi-dispatch+ issues an error
+response and exits 0.  Otherwise, it returns the exit code of +!prog!+.
+
+== SEE ALSO 
+The link:cgi-httpd.html[+cgi-httpd+] program.
+
+== AUTHOR
+William Baxter <sst@superscript.com>

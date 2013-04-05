@@ -1,0 +1,42 @@
+= constant-httpd (1)
+:doctype: manpage
+
+== NAME
+constant-httpd - serve a file in response to http requests
+
+== NAME
+!!!!
+constant-httpd !file!
+!!!!
+
+== DESCRIPTION 
+The +constant-httpd+ program reads an HTTP request message from standard input,
+and prints +!file!+ in response.
+
+Before reading any input, +constant-httpd+ changes the working directory to
+that named in the +$ROOT+ environment variable, performs +chroot+ to the
+current directory, and then sets its group id and user id to the numeric
+values given in the environment variables +$GID+ and +$UID+, typically set
+with http://cr.yp.to/daemontools/envdir.html[+envdir+].  If it cannot carry
+out these operations, +constant-httpd+ complains to standard output and
+exits{nbsp}111.  If the +!file!+ argument is missing it silently
+exits{nbsp}100.
+
+If it encounters an error in reading +!file!+, +constant-httpd+
+exits{nbsp}23.  If it encounters another error processing a request,
++constant-httpd+ exits{nbsp}21.  Otherwise, it exits{nbsp}0.
+
+The +constant-httpd+ program accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1
+requests.  For a request with the host name +!host!+, +constant-httpd+ looks
+for +./!host!/!file!+, after replacing +/.+ with +/:+ and +//+ with +/+ in
++./!host!/!file!+.  For a valid request lacking a host name, +constant-httpd+
+uses +0+ as the host name.
+
+If the environment variable +$REQUESTHOST+ is set, then +constant-httpd+ uses
+its value as +!host!+, overriding any host given in the request.
+
+== SEE ALSO 
+The link:constant-config.html[+constant-config+] program.
+
+== AUTHOR
+William Baxter <sst@superscript.com>

@@ -1,0 +1,49 @@
+= How to install shttpd
+
+== System requirements
+The {package} package works only under UNIX.
+
+Running regression tests requires user accounts +shttp+ and +shttplog+.
+
+== Installation
+Download the shttpd package.  The most recent shttpd package is
+link:{package}-{version}.tar.gz[{version}].
+
+Unpack the shttpd package:
+!!!!
+gunzip {package}-{version}.tar
+tar -xf {package}-{version}.tar
+cd {package}-{version}
+!!!!
+
+Compile the shttpd programs:
+!!!!
+make
+!!!!
+
+As root, run some tests.  The tests assume the existence of the accounts
++shttp+ and +shttplog+, for running and logging output from shttpd daemons,
+respectively.  Create these accounts, or skip the tests.  Normally, the tests
+produce no output:
+!!!!
+make test
+!!!!
+If the tests fail, manually compare their output with the expected results:
+!!!!
+./rts > rts.out
+diff rts.out rts.exp
+!!!!
+
+As root, install the shttpd programs under +/usr/local/shttpd+:
+!!!!
+make setup check
+!!!!
+
+Report successful installation:
+!!!!
+  ( echo 'First M. Last'; cat `cat SYSDEPS` ) \
+  | mail web-inst@superscript.com
+!!!!
+replacing +First M. Last+ with your name.
+
+

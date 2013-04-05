@@ -1,0 +1,36 @@
+= echo-httpd (1)
+:doctype: manpage
+
+== NAME
+echo-httpd - echo a cgi request
+
+== SYNOPSIS 
+!!!!
+echo-httpd
+!!!!
+
+== DESCRIPTION 
+The +echo-httpd+ program reads an HTTP request message from standard input,
+adds a header, and prints the result to standard output.
+
+Before reading any input, +echo-httpd+ changes the working
+directory to that named in the +$ROOT+ environment variable,
+performs +chroot+ to the current directory, and then sets its
+group id and user id to the numeric values given in the environment
+variables +$GID+ and +$UID+, typically set with
+http://cr.yp.to/daemontools/envdir.html[+envdir+].
+If it cannot carry out these operations, +echo-httpd+ complains to
+standard output and exits{nbsp}111.  The +echo-httpd+ program opens no files.
+
+If it encounters a temporary error in processing a request,
++echo-httpd+ exits{nbsp}21.  Otherwise, it exits{nbsp}0.
+
+The +echo-httpd+ program is a debugging tool and not a proper http daemon.  It
+does not parse the request message, and handles any request, no matter how
+severely deformed.
+
+== SEE ALSO 
+The link:echo-config.html[+echo-config+] program.
+
+== AUTHOR
+William Baxter <sst@superscript.com>

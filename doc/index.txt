@@ -1,0 +1,60 @@
+= shttpd
+
+* How to link:install.html[install] shttpd
+* How to link:upgrade.html[upgrade] shttpd
+
+* The link:echo-httpd.html[+echo-httpd+] program
+* The link:echo-config.html[+echo-config+] program
+
+* The link:redir-httpd.html[+redir-httpd+] program
+* The link:redir-config.html[+redir-config+] program
+* The link:redir-data.html[+redir-data+] program
+
+* The link:cgi-httpd.html[+cgi-httpd+] program
+* The link:cgi-config.html[+cgi-config+] program
+
+* The link:cgiuser-httpd.html[+cgiuser-httpd+] program
+* The link:cgiuser-config.html[+cgiuser-config+] program
+
+* The link:cgi-dispatch.html[+cgi-dispatch+] program
+
+* The link:constant-httpd.html[+constant-httpd+] program
+* The link:constant-config.html[+constant-config+] program
+
+
+== What Is shttpd?
+The +echo-httpd+, +redir-httpd+, and +cgi-httpd+ programs are HTTP daemons
+designed to complement publicfile.
+
+The +echo-httpd+ program echos HTTP requests.
+
+The +echo-config+ program configures +echo-httpd+.
+
+The +redir-httpd+ program redirects HTTP requests via cdb lookup.
+
+The +redir-config+ program configures +redir-httpd+.
+
+The +cgi-httpd+ and +cgiuser-httpd+ programs execute a cgi script.
+
+The +cgi-config+ and +cgiuser-config+ programs configure +cgi-httpd+ and
++cgiuser-httpd+, respectively.
+
+The +cgi-dispatch+ program executes a CGI program specified by the environment variable
++PATH_INFO+.
+
+The +constant-httpd+ program prints the same file for each HTTP request.
+
+The +constant-config+ program configures +constant-httpd+.
+
+Each instance of an shttpd daemon listens on a separate address, in a
++chroot+ directory (except for +cgiuser-httpd+), typically running as a
+nonprivileged user.
+
+== Related Software
+The shttpd package complements http://cr.yp.to/publicfile.html[publicfile].
+
+== License
+Files in this package are in the public domain.
+
+The shttpd package comes with NO WARRANTY.
+

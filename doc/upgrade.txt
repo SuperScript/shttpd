@@ -1,0 +1,11 @@
+= Upgrading from previous versions
+
+== 0.52 to 0.53
+
+The +redir-httpd+ program now logs the +Referer:+ header in requests.
+Modify your log analysis programs accordingly.
+
+Redirection data for the host +!HOST!+ is now located in
++ROOT/!HOST!/data.cdb+.
+
+

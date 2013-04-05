@@ -1,0 +1,88 @@
+= redir-httpd (1)
+:doctype: manpage
+
+== NAME
+redir-httpd - issue a redirect in response to a cgi request
+
+== SYNOPSIS 
+!!!!
+redir-httpd
+!!!!
+
+== DESCRIPTION 
+The +redir-httpd+ program reads an HTTP request message from standard input,
+looks up the URI in a cdb-format database, and prints a redirect response or
+an error response to standard output.
+
+Before reading any input, +redir-httpd+ changes the working
+directory to that named in the +$ROOT+ environment variable,
+performs +chroot+ to the current directory, and then sets its
+group id and user id to the numeric values given in the environment
+variables +$GID+ and +$UID+, typically set with
+http://cr.yp.to/daemontools/envdir.html[+envdir+].
+If it cannot carry out these operations, +redir-httpd+ complains
+to standard error and exit{nbsp}111.
+
+If it encounters an error in processing a request, +redir-httpd+
+exit{nbsp}21.  Otherwise, it exit{nbsp}0.
+
+The +redir-httpd+ program accepts HTTP/0.9, HTTP/1.0, and HTTP/1.1 requests.
+For a request with the host name +!host!+, +redir-httpd+ replaces +/.+ with
++/:+ and +//+ with +/+ in +./!host!+, and then looks for redirection commands
+in the file +./!host!/data.cdb+, created by
+link:redir-data.html[+redir-data+].  For a valid request lacking a host name,
++redir-httpd+ uses +0+ as the host name.
+
+=== Request Path Resolution
+
+Starting immediately to the left of any query string in the request path, and
+moving from right to left, +redir-httpd+ splits the request path at each +/+
+character to obtain +!head!/!tail!+, and and attempts a cdb lookup using
++!head!/+ as the key.  Upon success, +redir-httpd+ replaces +!head!/+ with the
+lookup result, appends +!tail!+, and redirects the client to the resultant
+URL.  When +redir-httpd+ receives a request with an empty path, it uses +/+
+instead.
+
+If the full request path (sans query string) ends with a character other than
++/+, then +redir-httpd+ first attempts a lookup using the full request path as
+the key.
+
+=== Logging
+
+When it processes a request without error, +redir-httpd+ prints to standard
+error a line with the form
+!!!!
+!host! !ref! !match! !key! !value!
+!!!!
+The string +!host!+ is the request host name.  The string +!ref!+ is the value
+of the first +Referer:+ header, or +0+ if there is no such header.  The string
++!match!+ is +unknown+ if no match is found, +partial+ for a partial path
+match, or +exact+ for an exact path match.  The string +!key!+ is the portion
+of the request path that matched a redirection command, or the full request
+path when +!match!+ is +unknown+.  The string +!value!+ is the replacement for
++!key!+ in the relevant redirection command, or the empty string when
++!match!+ is +unknown+.
+
+Within each component of the log line, +redir-httpd+ replaces control
+characters with '+?+' and spaces with '+_+'.  If a component exceeds 100
+characters in length, +redir-httpd+ truncates it to 100 characters and appends
+ellipses.
+
+== EXAMPLES 
+Commands specifying the following substitutions
+!!!!
+/shttpd  --> http://www.superscript.com/shttpd/fubar.html
+/shttpd/ --> http://www.superscript.com/shttpd/
+!!!!
+result in the following redirections:
+!!!!
+/shttpd --> http://www.superscript.com/shttpd/fubar.html
+/shttpd/cgi-httpd.html --> http://www.superscript.com/shttpd/cgi-httpd.html
+!!!!
+
+== SEE ALSO 
+The link:redir-config.html[+redir-config+] program.
+The link:redir-data.html[+redir-data+] program.
+
+== AUTHOR
+William Baxter <sst@superscript.com>

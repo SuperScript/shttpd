@@ -1,0 +1,46 @@
+= redir-data (1)
+:doctype: manpage
+
+== NAME
+redir-data - construct a redirect cdb from the file data
+
+== SYNOPSIS 
+!!!!
+redir-data
+!!!!
+
+== DESCRIPTION 
+The +redir-data+ program creates the cdb-format file +data.cdb+ from
+information in the file +data+ for use by
+link:redir-httpd.html[+redir-httpd+].  It may use other files with names
+beginning with +data+.  The update to +data.cdb+ occurs atomically.
+
+=== Data Format
+
+Each redirection command in +data+ consists of a single line with two
++\#+-separated fields.  The first field is a request path, and the second
+field is the replacement for that request path.  Additional +#+ characters
+may appear in the replacement field.
+
+A request path ending in '+/+' permits +redir-httpd+ to form a partial match.
+The corresponding replacement field must also end in '+/+'.  An exact matches
+is preferred, as is the longest partial match.
+
+== EXAMPLES 
+Commands specifying the following substitutions
+!!!!
+/shttpd  --> http://www.superscript.com/shttpd/fubar.html
+/shttpd/ --> http://www.superscript.com/shttpd/
+!!!!
+result in the following redirections:
+!!!!
+/shttpd --> http://www.superscript.com/shttpd/fubar.html
+/shttpd/cgi-httpd.html --> http://www.superscript.com/shttpd/cgi-httpd.html
+!!!!
+
+== SEE ALSO 
+The link:redir-config.html[+redir-config+] program.
+The link:redir-httpd.html[+redir-httpd+] program.
+
+== AUTHOR
+William Baxter <sst@superscript.com>
